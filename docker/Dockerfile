@@ -1,18 +1,14 @@
-FROM debian:buster-slim
-ENV DEBIAN_FRONTEND noninteractive
-WORKDIR /app/
+FROM php:8.2-fpm
 
-RUN apt clean all
-RUN apt update
-RUN apt -y install nginx php php-fpm php-mysql nano curl php-xml cron php-curl php-gd php-mbstring composer php-imagick git
+WORKDIR /app
 
-COPY nginx.conf /etc/nginx/sites-available/
-RUN ln -sf /etc/nginx/sites-available/nginx.conf /etc/nginx/sites-enabled/default
+RUN apt-get update \
+	&& apt-get install -y --no-install-recommends \
+		libfreetype6-dev \
+		libjpeg62-turbo-dev \
+		libpng-dev \
+	&& docker-php-ext-configure gd --with-freetype --with-jpeg \
+	&& docker-php-ext-install -j"$(nproc)" gd \
+	&& rm -rf /var/lib/apt/lists/*
 
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-EXPOSE 80
-
-ENTRYPOINT ["/entrypoint.sh"]
-
+COPY php.ini /usr/local/etc/php/conf.d/hotglue-dev.ini

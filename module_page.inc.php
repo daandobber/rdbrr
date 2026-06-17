@@ -48,7 +48,7 @@ function page_clear_background_img($args)
 		// delete file
 		delete_upload(array('pagename'=>get_first_item(expl('.', $args['page'])), 'file'=>$obj['page-background-file'], 'max_cnt'=>1));
 		// and remove attributes
-		return object_remove_attr(array('name'=>$obj['name'], 'attr'=>array('page-background-file', 'page-background-mime')));
+		return object_remove_attr(array('name'=>$obj['name'], 'attr'=>array('page-background-file', 'page-background-mime', 'page-background-size', 'page-background-repeat', 'page-background-image-position')));
 	} else {
 		return response(true);
 	}
@@ -142,6 +142,14 @@ function page_render_object($args)
 	// background-image-position
 	if (!empty($obj['page-background-image-position'])) {
 		html_css('background-position', $obj['page-background-image-position']);
+	}
+	// background-size
+	if (!empty($obj['page-background-size'])) {
+		html_css('background-size', $obj['page-background-size']);
+	}
+	// background-repeat
+	if (!empty($obj['page-background-repeat'])) {
+		html_css('background-repeat', $obj['page-background-repeat']);
 	}
 	// set the html title
 	if (isset($obj['page-title'])) {
@@ -245,7 +253,9 @@ function page_upload($args)
 		return false;
 	}
 	// check if supported file
-	if (!in_array($args['mime'], array('image/jpeg', 'image/png', 'image/gif')) || ($args['mime'] == '' && !in_array(filext($args['file']), array('jpg', 'jpeg', 'png', 'gif')))) {
+	$mime_supported = in_array($args['mime'], array('image/jpeg', 'image/png', 'image/gif', 'image/webp'));
+	$ext_supported = in_array(strtolower(filext($args['file'])), array('jpg', 'jpeg', 'png', 'gif', 'webp'));
+	if (!$mime_supported && !($args['mime'] == '' && $ext_supported)) {
 		return false;
 	}
 	

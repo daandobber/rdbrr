@@ -683,7 +683,9 @@ function image_snapshot_symlink($args)
 function image_upload($args)
 {
 	// check if supported file
-	if (!in_array($args['mime'], array('image/jpeg', 'image/png', 'image/gif')) || ($args['mime'] == '' && !in_array(filext($args['file']), array('jpg', 'jpeg', 'png', 'gif')))) {
+	$mime_supported = in_array($args['mime'], array('image/jpeg', 'image/png', 'image/gif', 'image/webp'));
+	$ext_supported = in_array(strtolower(filext($args['file'])), array('jpg', 'jpeg', 'png', 'gif', 'webp'));
+	if (!$mime_supported && !($args['mime'] == '' && $ext_supported)) {
 		return false;
 	}
 	

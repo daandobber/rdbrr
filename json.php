@@ -20,6 +20,14 @@ require_once('util.inc.php');
 // set mime type and encoding first
 header('Content-Type: application/json; charset=UTF-8');
 
+function json_request_value($val)
+{
+	if (function_exists('get_magic_quotes_gpc') && get_magic_quotes_gpc()) {
+		return stripslashes($val);
+	}
+	return $val;
+}
+
 // get method and arguments
 $args = array();
 switch ($_SERVER['REQUEST_METHOD']) {
@@ -44,7 +52,7 @@ switch ($_SERVER['REQUEST_METHOD']) {
 	//	break;
 	case 'POST':
 		foreach ($_POST as $key=>$val) {
-			$val = stripslashes($val);
+			$val = json_request_value($val);
 			$dec = @json_decode($val, true);
 			if ($dec === NULL) {
 				$err = response('Error decoding the argument '.quot($key).' => '.var_dump_inl($val), 400);

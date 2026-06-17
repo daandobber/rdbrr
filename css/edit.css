@@ -112,6 +112,491 @@
 	/* all ui elements should use this class */
 }
 
+#social-editor-top-pane {
+	background: #dcd8ca;
+	border-bottom: solid 1px #9c9788;
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+	color: #222;
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
+	left: 0;
+	position: fixed;
+	right: 0;
+	top: 0;
+	z-index: 270;
+}
+
+#social-editor-top-pane .social-editor-menu-bar {
+	align-items: center;
+	background: #eeeadd;
+	display: flex;
+	gap: 2px;
+	height: 24px;
+	padding: 0 6px;
+}
+
+#social-editor-top-pane .social-editor-brand {
+	font-size: 11px;
+	font-weight: bold;
+	margin-right: 10px;
+}
+
+#social-editor-top-pane .social-editor-menu {
+	position: relative;
+}
+
+#social-editor-top-pane .social-editor-menu-trigger,
+#social-editor-top-pane .social-editor-menu-item {
+	background: transparent;
+	border: solid 1px transparent;
+	color: #222;
+	cursor: pointer;
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
+	font-size: 11px;
+	height: 21px;
+	padding: 2px 8px;
+	text-align: left;
+}
+
+#social-editor-top-pane .social-editor-menu-trigger:hover,
+#social-editor-top-pane .social-editor-menu:hover .social-editor-menu-trigger,
+#social-editor-top-pane .social-editor-menu-hover .social-editor-menu-trigger,
+#social-editor-top-pane .social-editor-menu-open .social-editor-menu-trigger {
+	background: #f8f6ed;
+	border-color: #8d8878;
+}
+
+#social-editor-top-pane .social-editor-menu-panel {
+	background: #f3efdf;
+	border: solid 1px #8d8878;
+	box-shadow: 2px 3px 5px rgba(0, 0, 0, 0.22);
+	display: none;
+	left: 0;
+	min-width: 150px;
+	padding: 3px;
+	position: absolute;
+	top: 20px;
+	z-index: 280;
+}
+
+#social-editor-top-pane .social-editor-menu-open .social-editor-menu-panel {
+	display: block;
+}
+
+#social-editor-top-pane .social-editor-menu:hover .social-editor-menu-panel,
+#social-editor-top-pane .social-editor-menu-hover .social-editor-menu-panel {
+	display: block;
+}
+
+#social-editor-top-pane .social-editor-menu-item {
+	display: block;
+	position: relative;
+	width: 100%;
+}
+
+#social-editor-top-pane .social-editor-menu-item:hover {
+	background: #d8e2f5;
+}
+
+#social-editor-top-pane .social-editor-menu-separator {
+	border-top: solid 1px #b6b0a1;
+	height: 0;
+	margin: 3px 4px;
+}
+
+#social-editor-top-pane .social-editor-submenu {
+	position: relative;
+}
+
+#social-editor-top-pane .social-editor-submenu-trigger:after {
+	content: ">";
+	float: right;
+	margin-left: 22px;
+}
+
+#social-editor-top-pane .social-editor-submenu-panel {
+	background: #f3efdf;
+	border: solid 1px #8d8878;
+	box-shadow: 2px 3px 5px rgba(0, 0, 0, 0.22);
+	display: none;
+	left: calc(100% - 8px);
+	min-width: 205px;
+	padding: 3px;
+	position: absolute;
+	top: -6px;
+	z-index: 290;
+}
+
+#social-editor-top-pane .social-editor-submenu:hover .social-editor-submenu-panel,
+#social-editor-top-pane .social-editor-submenu-hover .social-editor-submenu-panel {
+	display: block;
+}
+
+#social-editor-top-pane .social-editor-menu-upload {
+	overflow: hidden;
+}
+
+#social-editor-top-pane .social-editor-menu-upload input[type="file"] {
+	cursor: pointer;
+	left: 0;
+	top: 0;
+}
+
+#social-editor-edit-panel {
+	background: #dcd8ca;
+	border: solid 1px #8f8979;
+	box-shadow: 1px 2px 5px rgba(0, 0, 0, 0.18);
+	left: 5px;
+	padding: 3px;
+	position: fixed;
+	top: 34px;
+	width: 36px;
+	z-index: 265;
+}
+
+#social-editor-edit-panel .social-editor-panel-title {
+	background: #1c3f8f;
+	color: #fff;
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
+	font-size: 9px;
+	font-weight: bold;
+	margin: -3px -3px 4px -3px;
+	padding: 2px 3px;
+	text-align: center;
+}
+
+#social-editor-edit-panel .social-editor-tool {
+	background: #f4f1e6;
+	border-color: #fff #777 #777 #fff;
+	border-style: solid;
+	border-width: 1px;
+	box-sizing: border-box;
+	cursor: pointer;
+	display: block;
+	height: 30px;
+	margin: 0 0 3px 0;
+	overflow: hidden;
+	padding: 3px;
+	position: relative;
+	width: 30px;
+}
+
+#social-editor-edit-panel .social-editor-tool:hover,
+#social-editor-edit-panel .social-editor-tool-active {
+	background: #fff;
+	border-color: #777 #fff #fff #777;
+}
+
+#social-editor-edit-panel .social-editor-tool svg {
+	display: block;
+	fill: #202020;
+	height: 22px;
+	width: 22px;
+}
+
+#social-editor-edit-panel .social-editor-tool span {
+	left: -9999px;
+	position: absolute;
+}
+
+#social-editor-edit-panel .social-editor-tool input[type="file"] {
+	cursor: pointer;
+	left: 0;
+	top: 0;
+}
+
+.social-editor-popover,
+.social-style-panel {
+	background: #dedbcf;
+	border: solid 1px #404040;
+	box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+	box-sizing: border-box;
+	color: #111;
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
+	font-size: 11px;
+	padding: 0 8px 8px 8px;
+	position: absolute;
+	width: 250px;
+	z-index: 100020;
+}
+
+.social-editor-popover-head,
+.social-style-panel-head {
+	align-items: center;
+	background: #0a4fb1;
+	color: #fff;
+	display: flex;
+	justify-content: space-between;
+	margin: 0 -8px 8px -8px;
+	min-height: 22px;
+	padding: 0 5px 0 7px;
+}
+
+.social-window-drag-handle {
+	cursor: move;
+}
+
+.social-editor-popover-head button,
+.social-style-panel-head button {
+	background: #dedbcf;
+	border: solid 1px #202020;
+	color: #111;
+	cursor: pointer;
+	font-size: 11px;
+	height: 16px;
+	line-height: 12px;
+	padding: 0;
+	width: 16px;
+}
+
+.social-editor-popover label,
+.social-style-panel label {
+	align-items: center;
+	display: grid;
+	gap: 7px;
+	grid-template-columns: 82px 1fr;
+	margin: 0 0 6px 0;
+}
+
+.social-editor-popover span,
+.social-style-panel span {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.social-editor-popover input,
+.social-editor-popover select,
+.social-style-panel input,
+.social-style-panel select {
+	background: #fff;
+	border: solid 1px #777;
+	box-sizing: border-box;
+	color: #111;
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
+	font-size: 11px;
+	height: 22px;
+	padding: 2px 4px;
+	width: 100%;
+}
+
+.social-background-panel {
+	width: 285px;
+}
+
+.social-background-color-row {
+	align-items: center;
+	display: flex;
+	gap: 6px;
+}
+
+.social-background-color-swatch {
+	background-color: transparent;
+	background-image: linear-gradient(45deg, #c9c9c9 25%, transparent 25%), linear-gradient(-45deg, #c9c9c9 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #c9c9c9 75%), linear-gradient(-45deg, transparent 75%, #c9c9c9 75%);
+	background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+	background-size: 12px 12px;
+	border: solid 1px #555;
+	box-sizing: border-box;
+	cursor: pointer;
+	height: 22px;
+	padding: 0;
+	width: 30px;
+}
+
+.social-color-button,
+.social-background-actions button,
+.social-background-upload {
+	background: #f1f1f1;
+	border: solid 1px #555;
+	box-sizing: border-box;
+	color: #111;
+	cursor: pointer;
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
+	font-size: 11px;
+	height: 22px;
+	line-height: 16px;
+	padding: 2px 7px;
+	text-align: center;
+}
+
+.social-color-button {
+	flex: 1;
+	min-width: 0;
+}
+
+.social-editor-popover .social-editor-menu-upload {
+	overflow: hidden;
+	position: relative;
+	width: 100%;
+}
+
+.social-editor-popover .social-editor-menu-upload input[type="file"] {
+	cursor: pointer;
+	left: 0;
+	top: 0;
+}
+
+.social-background-actions {
+	display: grid;
+	gap: 6px;
+	grid-template-columns: 1fr 1fr;
+	margin-top: 8px;
+}
+
+.social-editor-popover-actions {
+	display: flex;
+	justify-content: flex-end;
+	margin-top: 8px;
+}
+
+.social-editor-popover-actions button {
+	background: #f1f1f1;
+	border: solid 1px #555;
+	color: #111;
+	cursor: pointer;
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
+	font-size: 11px;
+	padding: 3px 9px;
+}
+
+.social-layers-panel {
+	background: #dedbcf;
+	border: solid 1px #404040;
+	box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+	box-sizing: border-box;
+	color: #111;
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
+	font-size: 11px;
+	padding: 0 7px 7px 7px;
+	position: fixed;
+	width: 230px;
+	z-index: 100020;
+}
+
+.social-layers-panel-head {
+	align-items: center;
+	background: #0a4fb1;
+	color: #fff;
+	display: flex;
+	justify-content: space-between;
+	margin: 0 -7px 7px -7px;
+	min-height: 22px;
+	padding: 0 5px 0 7px;
+}
+
+.social-layers-panel-head button {
+	background: #dedbcf;
+	border: solid 1px #202020;
+	color: #111;
+	cursor: pointer;
+	font-size: 11px;
+	height: 16px;
+	line-height: 12px;
+	padding: 0;
+	width: 16px;
+}
+
+.social-layers-actions {
+	display: grid;
+	gap: 4px;
+	grid-template-columns: 1fr 1fr 1fr;
+	margin-bottom: 6px;
+}
+
+.social-layers-actions button,
+.social-layer-item {
+	background: #f1f1f1;
+	border: solid 1px #555;
+	box-sizing: border-box;
+	color: #111;
+	cursor: pointer;
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
+	font-size: 11px;
+	padding: 2px 5px;
+}
+
+.social-layers-actions button {
+	height: 22px;
+}
+
+.social-layers-list {
+	background: #f7f4e8;
+	border-color: #777 #fff #fff #777;
+	border-style: solid;
+	border-width: 1px;
+	max-height: 260px;
+	overflow: auto;
+	padding: 2px;
+}
+
+.social-layer-item {
+	align-items: center;
+	background: #fff;
+	border-color: transparent;
+	display: grid;
+	gap: 6px;
+	grid-template-columns: 34px 1fr 34px;
+	height: 42px;
+	margin-bottom: 2px;
+	text-align: left;
+	width: 100%;
+}
+
+.social-layer-item:hover,
+.social-layer-selected {
+	background: #d8e2f5;
+	border-color: #6d86b7;
+}
+
+.social-layer-name {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.social-layer-preview {
+	align-items: center;
+	background: #ede9dc;
+	border: solid 1px #777;
+	box-sizing: border-box;
+	color: #222;
+	display: inline-flex;
+	font-family: Georgia, serif;
+	font-size: 18px;
+	font-weight: bold;
+	height: 30px;
+	justify-content: center;
+	line-height: 1;
+	overflow: hidden;
+	width: 30px;
+}
+
+.social-layer-preview-image {
+	background-position: center;
+	background-repeat: no-repeat;
+	background-size: cover;
+}
+
+.social-layer-preview-text {
+	background: #fff;
+}
+
+.social-layer-preview-icon {
+	background: #dcd8ca;
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
+	font-size: 12px;
+}
+
+.social-layer-z {
+	color: #666;
+	text-align: right;
+}
+
+.social-layers-empty {
+	color: #666;
+	padding: 8px 6px;
+}
+
+
 .glue-upload-statusbar {
 	/* statusbar for uploading */
 	background-color: lightgrey;

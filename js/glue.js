@@ -69,7 +69,95 @@ $.glue.error = function()
 {
 	return function(s) {
 		if ($.glue.conf.show_frontend_errors) {
-			alert('The glue gun manufacturer says: '+s);
+			$('.glue-error-toast').remove();
+			var toast = $('<div class="glue-error-toast glue-ui"></div>');
+			toast.text('rdbrr: '+s);
+			toast.css({
+				background: '#dedbcf',
+				border: '1px solid #404040',
+				boxShadow: '2px 2px 0 rgba(0, 0, 0, 0.35)',
+				color: '#111',
+				fontFamily: 'Verdana, Geneva, Tahoma, sans-serif',
+				fontSize: '12px',
+				left: '50%',
+				maxWidth: '420px',
+				padding: '8px 10px',
+				position: 'fixed',
+				top: '42px',
+				transform: 'translateX(-50%)',
+				zIndex: 100050
+			});
+			$('body').append(toast);
+			setTimeout(function() {
+				toast.fadeOut(150, function() {
+					$(this).remove();
+				});
+			}, 4500);
 		}
 	};
 }();
+
+$.glue.confirm = function(message, ok_label, cancel_label, ok)
+{
+	$('.glue-confirm-panel').remove();
+	var panel = $('<div class="glue-confirm-panel glue-ui"></div>');
+	var head = $('<div></div>').text('rdbrr');
+	var body = $('<p></p>').text(message);
+	var actions = $('<div></div>');
+	var cancel = $('<button type="button"></button>').text(cancel_label || 'Annuleren');
+	var confirm = $('<button type="button"></button>').text(ok_label || 'OK');
+	panel.append(head).append(body).append(actions.append(cancel).append(confirm));
+	panel.css({
+		background: '#dedbcf',
+		border: '1px solid #404040',
+		boxShadow: '2px 2px 0 rgba(0, 0, 0, 0.35)',
+		boxSizing: 'border-box',
+		color: '#111',
+		fontFamily: 'Verdana, Geneva, Tahoma, sans-serif',
+		fontSize: '12px',
+		left: '50%',
+		padding: '0 10px 10px 10px',
+		position: 'fixed',
+		top: '54px',
+		transform: 'translateX(-50%)',
+		width: '340px',
+		zIndex: 100060
+	});
+	head.css({
+		background: '#0a4fb1',
+		color: '#fff',
+		fontWeight: 'bold',
+		margin: '0 -10px 9px -10px',
+		padding: '4px 7px'
+	});
+	body.css({
+		lineHeight: '1.35',
+		margin: '0 0 10px 0'
+	});
+	actions.css({
+		display: 'flex',
+		gap: '8px',
+		justifyContent: 'flex-end'
+	});
+	panel.find('button').css({
+		background: '#f1f1f1',
+		border: '1px solid #555',
+		color: '#111',
+		cursor: 'pointer',
+		fontFamily: 'Verdana, Geneva, Tahoma, sans-serif',
+		fontSize: '11px',
+		padding: '3px 9px'
+	});
+	cancel.bind('click', function() {
+		panel.remove();
+		return false;
+	});
+	confirm.bind('click', function() {
+		panel.remove();
+		if (typeof ok == 'function') {
+			ok();
+		}
+		return false;
+	});
+	$('body').append(panel);
+};

@@ -1423,6 +1423,96 @@ function update_object($args)
 
 register_service('glue.update_object', 'update_object', array('auth'=>true));
 
+function social_upload_guard_enabled()
+{
+	return defined('SOCIAL_ACCOUNTS') && SOCIAL_ACCOUNTS;
+}
+
+function social_upload_allowed_image($file)
+{
+	$allowed_mimes = defined('SOCIAL_ALLOWED_UPLOAD_MIMES') ? expl(' ', SOCIAL_ALLOWED_UPLOAD_MIMES) : array('image/jpeg', 'image/png', 'image/gif', 'image/webp');
+	$allowed_exts = array('jpg', 'jpeg', 'png', 'gif', 'webp');
+	$ext = isset($file['name']) ? strtolower(filext($file['name'])) : '';
+	$info = isset($file['tmp_name']) ? @getimagesize($file['tmp_name']) : false;
+	$mime = $info !== false && !empty($info['mime']) ? $info['mime'] : '';
+	if (!in_array($mime, $allowed_mimes)) {
+		return false;
+	}
+	return in_array($ext, $allowed_exts);
+}
+
+function social_upload_dir_size($dir)
+{
+	$total = 0;
+	if (!is_dir($dir)) {
+		return 0;
+	}
+	$items = @scandir($dir);
+	if ($items === false) {
+		return 0;
+	}
+	foreach ($items as $item) {
+		if ($item == '.' || $item == '..') {
+			continue;
+		}
+		$path = $dir.'/'.$item;
+		if (is_dir($path) && !is_link($path)) {
+			$total += social_upload_dir_size($path);
+		} elseif (is_file($path)) {
+			$total += filesize($path);
+		}
+	}
+	return $total;
+}
+
+function social_upload_avatar_total($username)
+{
+	$total = 0;
+	$dir = CONTENT_DIR.'/profile_avatars';
+	if (!is_dir($dir)) {
+		return 0;
+	}
+	$prefix = social_normalize_username($username).'-';
+	$items = @scandir($dir);
+	if ($items === false) {
+		return 0;
+	}
+	foreach ($items as $item) {
+		if (substr($item, 0, strlen($prefix)) == $prefix && is_file($dir.'/'.$item)) {
+			$total += filesize($dir.'/'.$item);
+		}
+	}
+	return $total;
+}
+
+function social_upload_used_bytes($username)
+{
+	return social_upload_dir_size(CONTENT_DIR.'/'.social_profile_page($username).'/shared')+social_upload_avatar_total($username);
+}
+
+function social_upload_guard($args, $file)
+{
+	if (!social_upload_guard_enabled()) {
+		return response(true);
+	}
+	require_once('social.inc.php');
+	$username = social_username_from_profile_page($args['page']);
+	if ($username === false) {
+		return response('Uploads zijn alleen toegestaan op profielpagina’s.', 403);
+	}
+	if (!social_can_edit_page($args['page'])) {
+		return response('Je kunt alleen naar je eigen profiel uploaden.', 403);
+	}
+	if (!social_upload_allowed_image($file)) {
+		return response('Alleen afbeeldingen zijn toegestaan: jpg, png, gif of webp.', 400);
+	}
+	$quota = defined('SOCIAL_USER_UPLOAD_QUOTA') ? intval(SOCIAL_USER_UPLOAD_QUOTA) : 5*1024*1024;
+	if (0 < $quota && social_upload_used_bytes($username)+intval($file['size']) > $quota) {
+		return response('Je uploadruimte is vol. Maximaal '.round($quota/1024/1024, 1).'MB per gebruiker.', 400);
+	}
+	return response(true);
+}
+
 
 /**
  *	upload one or more files
@@ -1447,6 +1537,10 @@ function upload_files($args)
 	
 	log_msg('debug', 'upload_files: $_FILES is '.var_dump_inl($_FILES));
 	foreach ($_FILES as $f) {
+		$guard = social_upload_guard($args, $f);
+		if ($guard['#error']) {
+			return $guard;
+		}
 		$existed = false;
 		$fn = upload_file($f['tmp_name'], $args['page'], $f['name'], $existed);
 		if ($fn === false) {

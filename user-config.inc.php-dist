@@ -5,13 +5,18 @@
  *  Settings in this file override (default) values set in config.inc.php
  *  Once renamed into user-config.inc.php this file will not be overwritten by 
  *  future updates.
- *  Primary intended use of this file is to set username and password, 
- *  however any other configuration variable can be set or changed here. 
+ *  Primary intended use of this file was to set the shared admin username and
+ *  password. This social fork defaults to AUTH_METHOD 'social', but you can
+ *  switch back to 'basic', 'digest' or 'none' here if needed.
  *
  *  !! RENAME THIS FILE INTO user-config.inc.php TO MAKE IT WORK !!
  *
  */
 
+@define('AUTH_METHOD', 'social');
 @define('AUTH_USER', 'admin');
 @define('AUTH_PASSWORD', 'changeme');
-
+@define('SOCIAL_ACCOUNTS', true);
+@define('SOCIAL_ADMIN_USERS', '');
+@define('SOCIAL_USER_UPLOAD_QUOTA', 5*1024*1024);
+@define('SOCIAL_ALLOWED_UPLOAD_MIMES', 'image/jpeg image/png image/gif image/webp');

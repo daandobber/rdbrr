@@ -1597,6 +1597,7 @@ $.glue.upload = function()
 	});
 	
 	return {
+		default_upload_handling: default_upload_handling,
 		// elem .. element to turn into a file button
 		// data .. other parameters to send to the service
 		// options ..	multiple => allow multiple files to be uploaded (boolean, defaults to false)
@@ -1903,10 +1904,10 @@ $(document).ready(function() {
 			return false;
 		} else if (e.ctrlKey && e.which == 90) {
 			// ctrl+z: show revisions browser to suggest using revisions in place of undo
-			if (confirm('Looking for an "undo" option?\nHOTGLUE keeps record of your recent edits - it\'s called "revisions".\nWould you like to browse through the revisions of this page?')) {
+			$.glue.confirm('Zoek je undo? rdbrr bewaart recente bewerkingen als revisies. Wil je de revisies van deze pagina bekijken?', 'Revisies openen', 'Blijven', function() {
 				window.location = $.glue.base_url+'?'+$.glue.page+'/revisions';
-				return false;
-			}
+			});
+			return false;
 		}
 	});
 	

@@ -16,7 +16,7 @@ error_reporting(E_ALL & ~E_STRICT);						// see php documentation
 
 // otherwise fall back to these defaults
 @define('ALWAYS_PROMPT_CREATE_PAGE', false);	// invoke the "create page" controller when trying to access a non-existing page even if the user is not logged in yet (otherwise they receive a 404)
-@define('AUTH_METHOD', 'basic');			// can be digest, basic or none
+@define('AUTH_METHOD', 'social');			// can be social, digest, basic or none
 
 // DON'T set username and password here!
 // instead rename file user-config.inc.php-dist to user-config.inc.php
@@ -39,11 +39,15 @@ error_reporting(E_ALL & ~E_STRICT);						// see php documentation
 @define('LOG_LEVEL', 'error');				// minimum log level (can be error, warn, info, debug)
 @define('SHORT_URLS', false);				// use short urls internally
 @define('SHOW_FRONTEND_ERRORS', true);
-@define('SITE_NAME', 'hotglue 1.0');
+@define('SITE_NAME', 'rdbrr');
+@define('SOCIAL_ACCOUNTS', true);			// enable account/profile routes for the social fork
+@define('SOCIAL_ADMIN_USERS', '');			// optional space-separated usernames that should always be admins
+@define('SOCIAL_USER_UPLOAD_QUOTA', 5*1024*1024);	// max bytes of uploaded media per user profile
+@define('SOCIAL_ALLOWED_UPLOAD_MIMES', 'image/jpeg image/png image/gif image/webp');
 @define('SNAPSHOT_MAX_AGE', 60*60*24*7);	// auto- revisions are automatically deleted after n seconds (zero to disable)
 @define('SNAPSHOT_MIN_AGE', 60*60);			// auto- revisions are created every n seconds (zero to disable)
 @define('USE_HOTGLUE_ERRORS', true);		// use hotglue theming for error pages
-@define('USE_MIN_FILES', true);				// use minified files if possible (see also JQUERY define)
+@define('USE_MIN_FILES', false);			// use minified files if possible (see also JQUERY define)
 // default modules
 @define('IMAGE_JPEG_QUAL', 90);				// quality for jpeg resizing (0 < 100)
 @define('IMAGE_PNG_QUAL', 7);				// quality for png resizing (9 < 0)

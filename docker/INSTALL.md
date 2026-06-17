@@ -1,12 +1,32 @@
-to put it up
-```
- $ docker-compose up -d
+Docker Development Setup
+========================
+
+Start from the repository root:
+
+```sh
+docker compose -f docker/docker-compose.yml up --build
 ```
 
-run
+Open:
+
+```text
+http://localhost:8080/
 ```
- $ docker-compose exec hotglue git clone https://github.com/k0a1a/hotglue2.git /app/
- $ docker-compose exec hotglue chmod -R 0777 /app/content
- $ docker-compose exec hotglue cp /app/user-config.inc.php-dist /app/user-config.inc.php
- $ docker-compose exec hotglue sed -i 's/changeme/myVeryComplexPassword/' /app/user-config.inc.php
+
+Useful routes:
+
+* `http://localhost:8080/?register`
+* `http://localhost:8080/?login`
+* `http://localhost:8080/?profiles`
+* `http://localhost:8080/?admin`
+* `http://localhost:8080/?me`
+
+The compose stack bind-mounts the repository into `/app`, so code changes on
+the host are visible immediately. The PHP container writes account and page
+data into the local `content/` directory.
+
+Stop the stack:
+
+```sh
+docker compose -f docker/docker-compose.yml down
 ```

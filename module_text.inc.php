@@ -312,13 +312,14 @@ function text_alter_render_early($args)
 		elem_css($elem, 'color', $obj['text-font-color']);
 	}
 	// font-family
-	if (!empty($obj['text-font-family'])) {
-		elem_css($elem, 'font-family', $obj['text-font-family']);
+	$font_family = !empty($obj['text-font-family']) ? $obj['text-font-family'] : 'DejaVuSans';
+	if (!empty($font_family)) {
+		elem_css($elem, 'font-family', $font_family);
 		if (TEXT_USE_WOFF_FONTS) {
-			if (_is_woff_font($obj['text-font-family'])) {
+			if (_is_woff_font($font_family)) {
 				// include all styles of the font because of inline html 
 				// (<strong>, etc)
-				_include_woff_font($obj['text-font-family']);
+				_include_woff_font($font_family);
 			}
 		}
 	}

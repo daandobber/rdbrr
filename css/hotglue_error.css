@@ -6,7 +6,9 @@ html, body {
 }
 
 #paper {
-	background: url('../img/hotglue-bluegrid.png');
+	background-color: #ececec;
+	background-image: linear-gradient(#d5d5d5 1px, transparent 1px), linear-gradient(90deg, #d5d5d5 1px, transparent 1px);
+	background-size: 24px 24px;
 	height: 626px;
 	margin: 15px;
 	padding-top: 50px;
@@ -38,6 +40,28 @@ html, body {
 	float: left;
 	font-size: 95%;
 	width: 100px;
+}
+
+.rdbrr-logo {
+	color: #111;
+	display: inline-block;
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
+	font-size: 24px;
+	font-weight: bold;
+	letter-spacing: 0;
+	text-decoration: none;
+}
+
+.rdbrr-error-mark {
+	color: rgba(235, 21, 81, 0.12);
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
+	font-size: 120px;
+	font-weight: bold;
+	left: 210px;
+	line-height: 1;
+	position: absolute;
+	top: 0;
+	z-index: 2;
 }
 
 #main {

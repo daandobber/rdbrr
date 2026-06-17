@@ -372,7 +372,14 @@ function run_service($service, $args = array())
 			}
 		}
 	}
-	
+
+	if (function_exists('social_authorize_service')) {
+		$ret = social_authorize_service($service, $args);
+		if ($ret !== true) {
+			return $ret;
+		}
+	}
+
 	log_msg('info', 'modules: running service '.quot($service));
 	return $services[$service]['func']($args);
 }

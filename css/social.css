@@ -1,0 +1,299 @@
+body#social form {
+	margin: 0 0 22px 0;
+}
+
+.social-top-nav {
+	align-items: center;
+	background: #f2f0e8;
+	border-bottom: solid 1px #777;
+	box-shadow: 0 1px 0 #fff inset;
+	box-sizing: border-box;
+	color: #202020;
+	display: flex;
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
+	font-size: 12px;
+	gap: 4px;
+	left: 0;
+	min-height: 34px;
+	padding: 5px 8px;
+	position: fixed;
+	right: 0;
+	top: 0;
+	z-index: 100000;
+}
+
+.social-top-nav a,
+.social-top-nav input[type='submit'] {
+	background: transparent;
+	border: solid 1px transparent;
+	color: #202020;
+	cursor: pointer;
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
+	font-size: 12px;
+	line-height: 18px;
+	padding: 2px 7px;
+	text-decoration: none;
+}
+
+.social-top-nav a:hover,
+.social-top-nav a.active,
+.social-top-nav input[type='submit']:hover {
+	background: #fff;
+	border-color: #999;
+}
+
+.social-top-nav .social-top-logo {
+	font-weight: bold;
+	margin-right: 10px;
+}
+
+.social-follow-form {
+	display: inline-block;
+	margin: 0 0 0 8px;
+}
+
+.social-follow-form.compact {
+	margin-left: 6px;
+}
+
+.social-follow-form input[type='submit'] {
+	font-size: 11px;
+	margin: 0;
+	padding: 2px 7px;
+	width: auto;
+}
+
+.social-profile-row {
+	align-items: center;
+	display: flex;
+	gap: 8px;
+}
+
+.social-notice {
+	background: #fff8d7;
+	border-left: solid 5px #d8ac24;
+	color: #4d4948;
+	padding: 8px 10px;
+}
+
+body#social label {
+	display: block;
+	font-weight: bold;
+	margin-bottom: 14px;
+}
+
+body#social input[type='text'],
+body#social input[type='url'],
+body#social input[type='file'],
+body#social input[type='password'] {
+	border: solid 2px #aaa;
+	box-sizing: border-box;
+	margin-top: 5px;
+	padding: 6px;
+	width: 270px;
+}
+
+body#social .social-error {
+	background: #ffe8ef;
+	border-left: solid 5px #eb1551;
+	color: #4d4948;
+	padding: 8px 10px;
+}
+
+body#social table.social-admin-users {
+	border-collapse: collapse;
+	margin-bottom: 22px;
+	width: 100%;
+}
+
+body#social table.social-admin-users th,
+body#social table.social-admin-users td {
+	border-bottom: solid 1px #ddd;
+	padding: 7px 5px;
+	text-align: left;
+	vertical-align: top;
+}
+
+body#social form.social-admin-action {
+	display: inline;
+	margin: 0 0 0 8px;
+}
+
+body#social form.social-admin-action input[type='submit'] {
+	font-size: 10pt;
+	margin: 0;
+	padding: 2px 6px;
+	width: auto;
+}
+
+.social-account-preview {
+	align-items: center;
+	display: flex;
+	gap: 10px;
+	margin: 0 0 18px 0;
+}
+
+.social-avatar-editor {
+	background: #f2f0e8;
+	border: solid 1px #aaa;
+	box-sizing: border-box;
+	margin: 0 0 14px 0;
+	max-width: 390px;
+	padding: 10px;
+}
+
+.social-avatar-cropper {
+	margin-top: 10px;
+}
+
+.social-avatar-crop-stage {
+	background: #c7c3b8;
+	border: solid 1px #777;
+	display: inline-block;
+	line-height: 0;
+	max-height: 340px;
+	max-width: 340px;
+	overflow: hidden;
+	position: relative;
+}
+
+.social-avatar-crop-image {
+	display: block;
+	height: auto;
+	max-height: 340px;
+	max-width: 340px;
+	width: auto;
+}
+
+.social-avatar-crop-box {
+	border: solid 2px #fff;
+	box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.42), 0 0 0 1px #111 inset;
+	box-sizing: border-box;
+	cursor: move;
+	position: absolute;
+}
+
+.social-avatar-crop-box span {
+	background: #fff;
+	border: solid 1px #111;
+	bottom: -6px;
+	box-sizing: border-box;
+	cursor: nwse-resize;
+	height: 12px;
+	position: absolute;
+	right: -6px;
+	width: 12px;
+}
+
+.social-avatar-crop-hint {
+	color: #666;
+	font-size: 11px;
+	margin: 6px 0 0 0;
+	max-width: 340px;
+}
+
+.social-upload-manager {
+	background: #f2f0e8;
+	border: solid 1px #aaa;
+	box-sizing: border-box;
+	margin: 18px 0;
+	max-width: 520px;
+	padding: 10px;
+}
+
+.social-upload-manager h2 {
+	font-size: 16px;
+	margin: 0 0 7px 0;
+}
+
+.social-upload-meter {
+	background: #fff;
+	border-color: #777 #fff #fff #777;
+	border-style: solid;
+	border-width: 1px;
+	height: 10px;
+	margin-bottom: 10px;
+	overflow: hidden;
+	width: 100%;
+}
+
+.social-upload-meter span {
+	background: #3f6fb5;
+	display: block;
+	height: 100%;
+}
+
+.social-upload-list {
+	display: grid;
+	gap: 6px;
+}
+
+.social-upload-row {
+	align-items: center;
+	background: #fff;
+	border: solid 1px #c8c3b8;
+	display: grid;
+	gap: 8px;
+	grid-template-columns: 46px 1fr auto;
+	padding: 6px;
+}
+
+.social-upload-row img,
+.social-upload-thumb-empty {
+	background: #dedbcf;
+	border: solid 1px #777;
+	box-sizing: border-box;
+	display: block;
+	height: 42px;
+	object-fit: cover;
+	width: 42px;
+}
+
+.social-upload-row span {
+	color: #666;
+	font-size: 11px;
+}
+
+body#social .social-upload-row form {
+	margin: 0;
+}
+
+body#social .social-upload-row input[type='submit'] {
+	font-size: 11px;
+	margin: 0;
+	padding: 3px 7px;
+	width: auto;
+}
+
+.social-avatar {
+	align-items: center;
+	background: #3f6fb5;
+	border: solid 1px rgba(0, 0, 0, 0.24);
+	box-sizing: border-box;
+	color: #fff;
+	display: inline-flex;
+	flex: 0 0 auto;
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
+	font-size: 18px;
+	font-weight: bold;
+	height: 44px;
+	justify-content: center;
+	line-height: 1;
+	overflow: hidden;
+	text-decoration: none;
+	text-transform: uppercase;
+	width: 44px;
+}
+
+.social-avatar.small {
+	font-size: 13px;
+	height: 30px;
+	width: 30px;
+}
+
+.social-avatar img {
+	display: block;
+	height: 100%;
+	object-fit: cover;
+	width: 100%;
+}

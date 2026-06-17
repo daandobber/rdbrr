@@ -1,0 +1,9 @@
+content/
+user-config.inc.php
+*.tar
+*.tar.gz
+*.zip
+*.sql
+.env
+.DS_Store
+Thumbs.db

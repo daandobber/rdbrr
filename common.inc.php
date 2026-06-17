@@ -12,6 +12,7 @@
 @require_once('config.inc.php');
 require_once('html.inc.php');
 require_once('modules.inc.php');
+require_once('social.inc.php');
 
 
 /**
@@ -228,13 +229,15 @@ function hotglue_error($code, $no_header = false)
 	body_append(tab(2).'<div id="wrapper">'.nl());
 	body_append(tab(3).'<div id="content">'.nl());
 	body_append(tab(4).'<div id="left-nav">'.nl());
-	body_append(tab(5).'<img src="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'img/hotglue-logo.png" alt="logo">'.nl());
+	body_append(tab(5).'<div class="rdbrr-logo">rdbrr</div>'.nl());
 	body_append(tab(4).'</div>'.nl());
 	body_append(tab(4).'<div id="main">'.nl());
 	if ($code == 400) {
 		body_append(tab(5).'<h1 id="error-title">ERROR 400, bad request!</h1>'.nl());
 	} elseif ($code == 401) {
 		body_append(tab(5).'<h1 id="error-title">Authorization required!</h1>'.nl());	
+	} elseif ($code == 403) {
+		body_append(tab(5).'<h1 id="error-title">ERROR 403, forbidden!</h1>'.nl());
 	} elseif ($code == 404) {
 		body_append(tab(5).'<h1 id="error-title">ERROR 404, not found!</h1>'.nl());	
 	} elseif ($code == 500) {
@@ -246,6 +249,8 @@ function hotglue_error($code, $no_header = false)
 		body_append(tab(6).'The page is sending a bad request to the server!'.nl());
 	} elseif ($code == 401) {
 		body_append(tab(6).'You need to be logged in in order to do this.<br>'.nl());
+	} elseif ($code == 403) {
+		body_append(tab(6).'You do not have permission to edit this page.<br>'.nl());
 	} elseif ($code == 404) {
 		body_append(tab(6).'It looks like you got lost in cyber-space...<br>'.nl());
 		body_append(tab(6).'The page you are trying to reach does not exist!'.nl());
@@ -258,9 +263,7 @@ function hotglue_error($code, $no_header = false)
 	body_append(tab(4).'</div>'.nl());
 	body_append(tab(3).'</div>'.nl());
 	body_append(tab(2).'</div>'.nl());
-	body_append(tab(2).'<div style="position: absolute; left: 200px; top: -10px; z-index: 2;">'.nl());
-	body_append(tab(3).'<img src="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'img/hotglue-404.png" alt="404">'.nl());
-	body_append(tab(2).'</div>'.nl());
+	body_append(tab(2).'<div class="rdbrr-error-mark">'.htmlspecialchars((string) $code, ENT_COMPAT, 'UTF-8').'</div>'.nl());
 	body_append(tab(1).'</div>'.nl());
 	echo html_finalize();
 	
@@ -275,7 +278,18 @@ function hotglue_error($code, $no_header = false)
  */
 function is_auth()
 {
-	if (AUTH_METHOD == 'none') {
+	if (AUTH_METHOD == 'social') {
+		if (!social_enabled()) {
+			log_msg('error', 'common: AUTH_METHOD is social but SOCIAL_ACCOUNTS is disabled');
+			return false;
+		}
+		if (social_current_user()) {
+			log_msg('debug', 'common: auth success (auth_method social)');
+			return true;
+		}
+		log_msg('debug', 'common: no session user (auth_method social)');
+		return false;
+	} elseif (AUTH_METHOD == 'none') {
 		log_msg('debug', 'common: auth success (auth_method none)');
 		return true;
 	} elseif (AUTH_METHOD == 'basic') {
@@ -459,7 +473,18 @@ function page_short($s)
  */
 function prompt_auth($header_only = false)
 {
-	if (AUTH_METHOD == 'none') {
+	if (AUTH_METHOD == 'social') {
+		if (!social_enabled()) {
+			log_msg('error', 'common: AUTH_METHOD is social but SOCIAL_ACCOUNTS is disabled');
+			hotglue_error(401, true);
+		}
+		if (!$header_only) {
+			$next = isset($_SERVER['QUERY_STRING']) ? $_SERVER['QUERY_STRING'] : '';
+			header('Location: '.social_login_url($next));
+			die();
+		}
+		header($_SERVER['SERVER_PROTOCOL'].' 401 Unauthorized');
+	} elseif (AUTH_METHOD == 'none') {
 		// nothing to do here
 	} elseif (AUTH_METHOD == 'basic') {
 		header('WWW-Authenticate: Basic realm="'.str_replace("\"", '', SITE_NAME).'"');

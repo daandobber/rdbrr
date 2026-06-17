@@ -30,6 +30,9 @@ function controller_create_page($args)
 {
 	page_canonical($args[0][0]);
 	$page = $args[0][0];
+	if (social_enabled() && AUTH_METHOD == 'social' && !social_can_edit_page($page)) {
+		hotglue_error(403);
+	}
 	if (page_exists($page)) {
 		log_msg('debug', 'controller_create_page: page '.quot($page).'already exists, invoking controller_edit');
 		controller_edit($args);
@@ -52,7 +55,7 @@ function controller_create_page($args)
 	body_append(tab(2).'<div id="wrapper">'.nl());
 	body_append(tab(3).'<div id="content">'.nl());
 	body_append(tab(4).'<div id="left-nav">'.nl());
-	body_append(tab(5).'<img src="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'img/hotglue-logo.png" alt="logo">'.nl());
+	body_append(tab(5).'<div class="rdbrr-logo">rdbrr</div>'.nl());
 	body_append(tab(4).'</div>'.nl());
 	body_append(tab(4).'<div id="main">'.nl());
 	body_append(tab(5).'<h1 id="error-title">Page does not exist yet!</h1>'.nl());
@@ -64,9 +67,7 @@ function controller_create_page($args)
 	body_append(tab(4).'</div>'.nl());
 	body_append(tab(3).'</div>'.nl());
 	body_append(tab(2).'</div>'.nl());
-	body_append(tab(2).'<div style="position: absolute; left: 200px; top: -10px; z-index: 2;">'.nl());
-	body_append(tab(3).'<img src="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'img/hotglue-404.png" alt="404">'.nl());
-	body_append(tab(2).'</div>'.nl());
+	body_append(tab(2).'<div class="rdbrr-error-mark">new</div>'.nl());
 	body_append(tab(1).'</div>'.nl());
 	echo html_finalize();
 }
@@ -92,13 +93,23 @@ function controller_edit($args)
 		controller_create_page($args);
 		return;
 	}
+	if (social_enabled() && AUTH_METHOD == 'social' && !social_can_edit_page($page)) {
+		hotglue_error(403);
+	}
 	
 	// create page on the fly
 	load_modules('glue');
 	default_html(true);
 	html_add_js_var('$.glue.page', $page);
+	if (social_enabled() && AUTH_METHOD == 'social') {
+		$profile_username = social_username_from_profile_page($page);
+		if ($profile_username !== false) {
+			html_add_js_var('$.glue.social_profile_url', social_profile_url($profile_username));
+		}
+		html_add_js_var('$.glue.social_is_admin', social_is_admin());
+	}
 	html_add_css(base_url().'css/farbtastic.css', 2);
-	html_add_css(base_url().'css/edit.css', 5);
+	html_add_css(base_url().'css/edit.css?v='.filemtime('css/edit.css'), 5);
 	if (USE_MIN_FILES) {
 		html_add_js(base_url().'js/jquery-ui-1.8.6.custom.min.js', 2);
 	} else {
@@ -119,6 +130,11 @@ function controller_edit($args)
 	} else {
 		html_add_js(base_url().'js/edit.js', 4);
 	}
+	if (social_enabled() && AUTH_METHOD == 'social') {
+		html_add_css(base_url().'css/social_microblog.css', 6);
+		html_add_js(base_url().'js/social_microblog.js', 4.6);
+	}
+	html_add_js(base_url().'js/social_edit_toolbar.js?v='.filemtime('js/social_edit_toolbar.js'), 4.5);
 	render_page(array('page'=>$page, 'edit'=>true));
 	echo html_finalize();
 	
@@ -137,6 +153,14 @@ register_controller('*', 'edit', 'controller_edit', array('auth'=>true));
 function controller_default($args)
 {
 	if (empty($args[0][0]) && empty($args[0][1])) {
+		if (social_enabled() && AUTH_METHOD == 'social') {
+			if (social_current_username()) {
+				header('Location: '.base_url().'timeline');
+				die();
+			}
+			social_controller_profiles($args);
+			return;
+		}
 		// take the default page
 		$args[0][0] = startpage();
 		log_msg('debug', 'controller_default: using the default page');
@@ -148,7 +172,17 @@ function controller_default($args)
 		invoke_controller($args);
 		return;
 	}
-	
+	if (social_enabled() && isset($args[0][0])) {
+		$profile_route = social_route_profile_args($args[0]);
+		if ($profile_route !== false) {
+			$args[0] = $profile_route;
+			invoke_controller($args);
+			return;
+		}
+		if (is_string($args[0][0]) && substr($args[0][0], 0, 1) == '@') {
+			hotglue_error(404);
+		}
+	}
 	page_canonical($args[0][0]);
 	$obj = expl('.', $args[0][0]);
 	if (count($obj) == 2) {
@@ -216,7 +250,20 @@ function controller_login($args)
 	}
 }
 
-register_controller('login', '', 'controller_login');
+if (social_enabled() && AUTH_METHOD == 'social') {
+	register_controller('account', '', 'social_controller_account');
+	register_controller('admin', '', 'social_controller_admin');
+	register_controller('login', '', 'social_controller_login');
+	register_controller('register', '', 'social_controller_register');
+	register_controller('logout', '', 'social_controller_logout');
+	register_controller('me', '', 'social_controller_me');
+	register_controller('feed', '', 'social_controller_feed');
+	register_controller('follow', '', 'social_controller_follow');
+	register_controller('profiles', '', 'social_controller_profiles');
+	register_controller('timeline', '', 'social_controller_timeline');
+} else {
+	register_controller('login', '', 'controller_login');
+}
 
 
 /**
@@ -279,6 +326,14 @@ function invoke_controller($args)
 		$args[0] = array('', '');
 	} elseif (is_string($args[0])) {
 		$args[0] = array($args[0], '');
+	}
+	if (social_enabled() && isset($args[0][0])) {
+		$profile_route = social_route_profile_args($args[0]);
+		if ($profile_route !== false) {
+			$args[0] = $profile_route;
+		} elseif (is_string($args[0][0]) && substr($args[0][0], 0, 1) == '@') {
+			hotglue_error(404);
+		}
 	}
 	
 	// load all modules
