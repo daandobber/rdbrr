@@ -316,6 +316,23 @@ $.glue.contextmenu = function()
 		return panel;
 	};
 
+	var object_control_names = {
+		'object-transparency': true
+	};
+
+	var text_control_names = {
+		'text-background-color': true,
+		'text-background-transparent': true,
+		'text-font-size': true,
+		'text-font-color': true,
+		'text-font-style': true,
+		'text-line-height': true,
+		'text-letter-spacing': true,
+		'text-word-spacing': true,
+		'text-align': true,
+		'text-text-padding': true
+	};
+
 	var add_panel_group = function(obj, title, items) {
 		if (!items.length) {
 			return;
@@ -327,9 +344,14 @@ $.glue.contextmenu = function()
 		panel.append(group);
 		for (var i=0; i < items.length; i++) {
 			var item = items[i];
-			var row = $('<div class="social-object-action-row"></div>');
-			var icon = $('<span class="social-object-action-icon"></span>');
+			if (object_control_names[item.name] || ($(obj).hasClass('text') && text_control_names[item.name])) {
+				continue;
+			}
+			var button = $('<button type="button" class="social-object-action-button"></button>');
+			var label = label_for(item);
+			button.attr('title', label);
 			$(item.elem).attr('id', 'glue-contextmenu-'+item.name);
+			$(item.elem).attr('title', label);
 			$(item.elem).addClass('glue-ui');
 			$(item.elem).css({
 				left: '',
@@ -339,13 +361,12 @@ $.glue.contextmenu = function()
 				'z-index': ''
 			});
 			$(item.elem).data('owner', obj);
-			icon.append(item.elem);
-			row.append(icon);
-			row.append($('<span class="social-object-action-label"></span>').text(label_for(item)));
-			list.append(row);
-			(function(elem, row) {
-				row.bind('mousedown click', function(e) {
-					if ($(e.target).parents('.social-object-action-icon').length || $(e.target).hasClass('social-object-action-icon')) {
+			button.append(item.elem);
+			list.append(button);
+			(function(elem, button) {
+				button.bind('mousedown click', function(e) {
+					var elem_dom = $(elem).get(0);
+					if (e.target == elem_dom || $.inArray(e.target, $(elem).find('*').get()) != -1) {
 						return;
 					}
 					var proxied = $.Event(e.type);
@@ -356,10 +377,10 @@ $.glue.contextmenu = function()
 					$(elem).trigger(proxied);
 					return false;
 				});
-			})(item.elem, row);
+			})(item.elem, button);
 			$(item.elem).trigger('glue-menu-activate');
 			if ($(item.elem).css('display') == 'none') {
-				row.remove();
+				button.remove();
 				continue;
 			}
 			$(item.elem).css('visibility', '');
@@ -368,6 +389,7 @@ $.glue.contextmenu = function()
 			group.remove();
 		}
 	};
+
 	var rgb_to_hex = function(value) {
 		var match = String(value || '').match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
 		if (!match) {
@@ -384,6 +406,196 @@ $.glue.contextmenu = function()
 		return hex;
 	};
 
+	var px_number = function(value, fallback) {
+		var n = parseFloat(value);
+		return isNaN(n) ? fallback : n;
+	};
+
+	var add_object_style_group = function(obj) {
+		var group = $('<div class="social-object-group social-object-base-controls"></div>');
+		group.append($('<div class="social-object-group-title"></div>').text('Object stijl'));
+		var list = $('<div class="social-object-style-list"></div>');
+		group.append(list);
+		panel.append(group);
+		var control = function(label, input) {
+			list.append($('<label></label>').append($('<span></span>').text(label)).append(input));
+			return input;
+		};
+		var pair = function(range, value) {
+			return $('<div class="social-object-range-pair"></div>').append(range).append(value);
+		};
+		var opacity = Math.round((parseFloat($(obj).css('opacity')) || 1)*100);
+		var opacity_range = $('<input type="range" min="0" max="100" step="1" title="Transparantie">').val(opacity);
+		var opacity_value = $('<input type="number" min="0" max="100" step="1" title="Transparantie percentage">').val(opacity);
+		control('Dekking', pair(opacity_range, opacity_value));
+		var apply_opacity = function(value) {
+			var n = parseInt(value, 10);
+			if (isNaN(n)) {
+				return;
+			}
+			n = Math.max(0, Math.min(100, n));
+			opacity_range.val(n);
+			opacity_value.val(n);
+			$(obj).css('opacity', n/100);
+			$.glue.object.save(obj);
+		};
+		opacity_range.bind('input change', function() { apply_opacity($(this).val()); });
+		opacity_value.bind('keyup change', function() { apply_opacity($(this).val()); });
+	};
+	var add_text_style_group = function(obj) {
+		if (!$(obj).hasClass('text')) {
+			return;
+		}
+		var group = $('<div class="social-object-group social-object-text-controls"></div>');
+		group.append($('<div class="social-object-group-title"></div>').text('Tekst stijl'));
+		var list = $('<div class="social-object-style-list"></div>');
+		group.append(list);
+		panel.append(group);
+
+		var save = function() {
+			clearTimeout($(obj).data('social-text-style-save'));
+			$(obj).data('social-text-style-save', setTimeout(function() {
+				$.glue.object.save(obj);
+			}, 150));
+		};
+		var control = function(label, input) {
+			list.append($('<label></label>').append($('<span></span>').text(label)).append(input));
+			return input;
+		};
+		var pair = function(range, value) {
+			return $('<div class="social-object-range-pair"></div>').append(range).append(value);
+		};
+		var sync_px = function(range, value, prop, suffix, callback) {
+			var apply = function(raw) {
+				var n = parseFloat(raw);
+				if (isNaN(n)) {
+					return;
+				}
+				value.val(n);
+				range.val(n);
+				if (callback) {
+					callback(n);
+				} else {
+					$(obj).css(prop, n+(suffix || 'px'));
+				}
+				save();
+			};
+			range.bind('input change', function() { apply($(this).val()); });
+			value.bind('keyup change', function() { apply($(this).val()); });
+		};
+
+		var bg = control('Achtergrond', $('<div class="social-object-inline-controls"></div>'));
+		var bg_color = $('<input type="color" title="Achtergrondkleur">').val(rgb_to_hex($(obj).css('background-color')));
+		var bg_clear = $('<button type="button" title="Achtergrond transparant">T</button>');
+		bg.append(bg_color).append(bg_clear);
+		bg_color.bind('change', function() {
+			$(obj).css('background-color', $(this).val());
+			$(obj).children('.glue-text-input').css('background-color', $(this).val());
+			save();
+		});
+		bg_clear.bind('click', function() {
+			$(obj).css('background-color', 'transparent');
+			$(obj).children('.glue-text-input').css('background-color', 'transparent');
+			save();
+			return false;
+		});
+
+		var color = control('Tekst', $('<input type="color">').val(rgb_to_hex($(obj).css('color'))));
+		color.bind('change', function() {
+			$(obj).css('color', $(this).val());
+			save();
+		});
+
+		var font = $('<select></select>');
+		var fonts = [
+			['DejaVuSans', 'DejaVu Sans'],
+			['DejaVuSerif', 'DejaVu Serif'],
+			['DejaVuSansMono', 'DejaVu Mono'],
+			['LatinModern', 'Latin Modern'],
+			['Verdana, Geneva, Tahoma, sans-serif', 'Verdana'],
+			['Arial, Helvetica, sans-serif', 'Arial'],
+			['Georgia, serif', 'Georgia'],
+			['"Courier New", Courier, monospace', 'Courier New']
+		];
+		var current_font = $(obj).css('font-family') || '';
+		for (var i=0; i < fonts.length; i++) {
+			var opt = $('<option></option>').val(fonts[i][0]).text(fonts[i][1]);
+			if (current_font.indexOf(fonts[i][1]) != -1 || current_font.indexOf(fonts[i][0]) != -1) {
+				opt.attr('selected', 'selected');
+			}
+			font.append(opt);
+		}
+		control('Font', font);
+		font.bind('change', function() {
+			$(obj).css('font-family', $(this).val());
+			save();
+		});
+
+		var size_n = px_number($(obj).css('font-size'), 24);
+		var size_range = $('<input type="range" min="8" max="120" step="1">').val(size_n);
+		var size_value = $('<input type="number" min="1" max="300" step="1">').val(size_n);
+		control('Grootte', pair(size_range, size_value));
+		sync_px(size_range, size_value, 'font-size');
+
+		var toggles = $('<div class="social-object-toggle-row"></div>');
+		var bold = $('<button type="button" title="Vet">B</button>');
+		var italic = $('<button type="button" title="Cursief"><em>I</em></button>');
+		var left_align = $('<button type="button" title="Links">L</button>');
+		var center_align = $('<button type="button" title="Midden">C</button>');
+		var right_align = $('<button type="button" title="Rechts">R</button>');
+		var justify_align = $('<button type="button" title="Uitvullen">J</button>');
+		toggles.append(bold).append(italic).append(left_align).append(center_align).append(right_align).append(justify_align);
+		control('Knoppen', toggles);
+		var refresh_toggles = function() {
+			bold.toggleClass('social-object-toggle-active', $(obj).css('font-weight') == 'bold' || parseInt($(obj).css('font-weight'), 10) >= 700);
+			italic.toggleClass('social-object-toggle-active', $(obj).css('font-style') == 'italic');
+		};
+		refresh_toggles();
+		bold.bind('click', function() {
+			var active = $(this).hasClass('social-object-toggle-active');
+			$(obj).css('font-weight', active ? 'normal' : 'bold');
+			refresh_toggles();
+			save();
+			return false;
+		});
+		italic.bind('click', function() {
+			var active = $(this).hasClass('social-object-toggle-active');
+			$(obj).css('font-style', active ? 'normal' : 'italic');
+			refresh_toggles();
+			save();
+			return false;
+		});
+		left_align.bind('click', function() { $(obj).css('text-align', 'left'); save(); return false; });
+		center_align.bind('click', function() { $(obj).css('text-align', 'center'); save(); return false; });
+		right_align.bind('click', function() { $(obj).css('text-align', 'right'); save(); return false; });
+		justify_align.bind('click', function() { $(obj).css('text-align', 'justify'); save(); return false; });
+
+		var line_n = px_number($(obj).css('line-height'), size_n*1.2);
+		var line_range = $('<input type="range" min="8" max="180" step="1">').val(line_n);
+		var line_value = $('<input type="number" min="1" max="300" step="1">').val(Math.round(line_n));
+		control('Regel', pair(line_range, line_value));
+		sync_px(line_range, line_value, 'line-height');
+
+		var letter_n = px_number($(obj).css('letter-spacing'), 0);
+		var letter_range = $('<input type="range" min="-10" max="40" step="1">').val(letter_n);
+		var letter_value = $('<input type="number" min="-50" max="100" step="1">').val(letter_n);
+		control('Letters', pair(letter_range, letter_value));
+		sync_px(letter_range, letter_value, 'letter-spacing');
+
+		var word_n = px_number($(obj).css('word-spacing'), 0);
+		var word_range = $('<input type="range" min="-10" max="80" step="1">').val(word_n);
+		var word_value = $('<input type="number" min="-50" max="150" step="1">').val(word_n);
+		control('Woorden', pair(word_range, word_value));
+		sync_px(word_range, word_value, 'word-spacing');
+
+		var pad_n = px_number($(obj).css('padding-left'), 0);
+		var pad_range = $('<input type="range" min="0" max="80" step="1">').val(pad_n);
+		var pad_value = $('<input type="number" min="0" max="200" step="1">').val(pad_n);
+		control('Padding', pair(pad_range, pad_value));
+		sync_px(pad_range, pad_value, 'padding', 'px', function(n) {
+			$(obj).css('padding', n+'px');
+		});
+	};
 	var add_social_style_group = function(obj) {
 		var is_wall = $(obj).hasClass('social_wall');
 		var is_microblog = $(obj).hasClass('social_microblog');
@@ -593,8 +805,10 @@ $.glue.contextmenu = function()
 			panel = build_panel(obj);
 			add_panel_group(obj, 'Object', left);
 			add_panel_group(obj, 'Stijl', top);
+			add_object_style_group(obj);
+			add_text_style_group(obj);
 			add_social_style_group(obj);
-			if (!panel.find('.social-object-action-row').length && !panel.find('.social-object-style-controls').length) {
+			if (!panel.find('.social-object-action-button').length && !panel.find('.social-object-style-controls, .social-object-text-controls, .social-object-base-controls').length) {
 				panel.append($('<div class="social-object-empty">Geen acties beschikbaar</div>'));
 			}
 			place_panel(obj);
