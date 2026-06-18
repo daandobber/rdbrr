@@ -69,6 +69,9 @@ function webvideo_alter_render_early($args)
 	// frameborder is not valid html
 	//elem_attr($i, 'frameborder', '0');
 	elem_css($i, 'border-width', '0px');
+	elem_css($i, 'border-radius', 'inherit');
+	elem_css($i, 'clip-path', 'inherit');
+	elem_css($i, '-webkit-clip-path', 'inherit');
 	elem_css($i, 'height', '100%');
 	elem_css($i, 'position', 'absolute');
 	elem_css($i, 'width', '100%');		

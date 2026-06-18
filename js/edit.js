@@ -454,6 +454,8 @@ $.glue.contextmenu = function()
 			}
 		}
 		$(obj).children('img, iframe, video, .glue-iframe-shield').css('border-radius', 'inherit');
+		$(obj).children('img, iframe, video').css('clip-path', 'inherit');
+		$(obj).children('img, iframe, video').css('-webkit-clip-path', 'inherit');
 	};
 
 	var encode_custom_css = function(value) {
@@ -665,6 +667,8 @@ $.glue.contextmenu = function()
 			$(obj).css('border-radius', n+'px');
 			$(obj).css('overflow', n > 0 ? 'hidden' : '');
 			$(obj).children('img, iframe, video, .glue-iframe-shield').css('border-radius', 'inherit');
+			$(obj).children('img, iframe, video').css('clip-path', 'inherit');
+			$(obj).children('img, iframe, video').css('-webkit-clip-path', 'inherit');
 		});
 		css_button.bind('click', function() { open_object_css_panel(obj); return false; });
 	};

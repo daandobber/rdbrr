@@ -129,6 +129,9 @@ function video_alter_render_early($args)
 	}
 	elem_css($v, 'width', '100%');
 	elem_css($v, 'height', '100%');
+	elem_css($v, 'border-radius', 'inherit');
+	elem_css($v, 'clip-path', 'inherit');
+	elem_css($v, '-webkit-clip-path', 'inherit');
 	// we're currently not preloading the video due to some troubles on 
 	// Firefox
 	//elem_css($v, 'preload', 'preload');
