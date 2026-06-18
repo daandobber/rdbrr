@@ -168,9 +168,49 @@ $.glue.contextmenu = function()
 	var left = [];
 	var m = {};
 	var owner = false;
+	var panel = false;
 	var prev_owner = false;
 	var top = [];
 	var veto = {};
+	var labels = {
+		'object-clone': 'Dupliceren',
+		'object-transparency': 'Transparantie',
+		'object-zindex': 'Laagvolgorde',
+		'object-link': 'Link',
+		'object-target': 'Link openen',
+		'object-symlink': 'Koppeling',
+		'object-delete': 'Verwijderen',
+		'object-lock': 'Vergrendelen',
+		'object-transform-flip': 'Spiegelen',
+		'object-transform-rotate': 'Roteren',
+		'text-background-color': 'Achtergrondkleur',
+		'text-background-transparent': 'Achtergrond transparant',
+		'text-font-size': 'Lettergrootte',
+		'text-font-color': 'Tekstkleur',
+		'text-font-face': 'Lettertype',
+		'text-font-style': 'Vet/cursief',
+		'text-line-height': 'Regelhoogte',
+		'text-letter-spacing': 'Letterafstand',
+		'text-word-spacing': 'Woordafstand',
+		'text-align': 'Uitlijning',
+		'text-text-padding': 'Binnenruimte',
+		'image-tile': 'Afbeelding herhalen',
+		'image-ratio': 'Originele maat',
+		'image-pos': 'Uitsnede verschuiven',
+		'image-download': 'Origineel downloaden',
+		'iframe-url': 'Web URL',
+		'iframe-scroll': 'Scrollen',
+		'webvideo-autoplay': 'Automatisch afspelen',
+		'webvideo-loop': 'Herhalen',
+		'video-autoplay': 'Automatisch afspelen',
+		'video-loop': 'Herhalen',
+		'video-controls': 'Videoknoppen',
+		'video-mute': 'Dempen',
+		'video-ratio': 'Videoverhouding',
+		'video-download': 'Video downloaden',
+		'download-download': 'Downloaden',
+		'download-public': 'Publiek downloadbaar'
+	};
 	
 	$('.object').live('glue-deselect', function(e) {
 		// hide menu when deselecting
@@ -202,6 +242,113 @@ $.glue.contextmenu = function()
 		}
 	});
 	
+	var label_for = function(item) {
+		if (labels[item.name]) {
+			return labels[item.name];
+		}
+		var title = $(item.elem).attr('title');
+		if (title) {
+			return title.replace(/\s*\(.*/, '');
+		}
+		return item.name.replace(/^[^-]+-/, '').replace(/-/g, ' ');
+	};
+
+	var panel_title = function(obj) {
+		if ($(obj).hasClass('text')) {
+			return 'Tekst object';
+		}
+		if ($(obj).hasClass('image')) {
+			return 'Afbeelding';
+		}
+		if ($(obj).hasClass('iframe')) {
+			return 'Web element';
+		}
+		if ($(obj).hasClass('video') || $(obj).hasClass('webvideo')) {
+			return 'Video';
+		}
+		if ($(obj).hasClass('download')) {
+			return 'Download';
+		}
+		return 'Object';
+	};
+
+	var build_panel = function(obj) {
+		panel = $('<div id="social-object-panel" class="social-object-panel glue-ui"></div>');
+		var head = $('<div class="social-object-panel-head"><strong></strong><button type="button" title="Sluiten">x</button></div>');
+		head.find('strong').text(panel_title(obj));
+		panel.append(head);
+		var meta = $('<div class="social-object-meta"></div>');
+		meta.text($(obj).attr('id'));
+		panel.append(meta);
+		$('body').append(panel);
+		panel.bind('mousedown click dblclick', function(e) {
+			e.stopPropagation();
+		});
+		head.find('button').bind('click', function() {
+			$.glue.contextmenu.hide();
+			return false;
+		});
+		if ($.glue.social_window && $.glue.social_window.make_draggable) {
+			$.glue.social_window.make_draggable(panel, head);
+		} else if ($.fn.draggable) {
+			panel.draggable({ addClasses: false, handle: head, cancel: 'button,input,select,textarea' });
+		}
+		return panel;
+	};
+
+	var add_panel_group = function(obj, title, items) {
+		if (!items.length) {
+			return;
+		}
+		var group = $('<div class="social-object-group"></div>');
+		group.append($('<div class="social-object-group-title"></div>').text(title));
+		var list = $('<div class="social-object-action-list"></div>');
+		group.append(list);
+		panel.append(group);
+		for (var i=0; i < items.length; i++) {
+			var item = items[i];
+			var row = $('<div class="social-object-action-row"></div>');
+			var icon = $('<span class="social-object-action-icon"></span>');
+			$(item.elem).attr('id', 'glue-contextmenu-'+item.name);
+			$(item.elem).addClass('glue-ui');
+			$(item.elem).css({
+				left: '',
+				top: '',
+				position: 'static',
+				visibility: 'hidden',
+				'z-index': ''
+			});
+			$(item.elem).data('owner', obj);
+			icon.append(item.elem);
+			row.append(icon);
+			row.append($('<span class="social-object-action-label"></span>').text(label_for(item)));
+			list.append(row);
+			(function(elem, row) {
+				row.bind('mousedown click', function(e) {
+					if ($(e.target).parents('.social-object-action-icon').length || $(e.target).hasClass('social-object-action-icon')) {
+						return;
+					}
+					var proxied = $.Event(e.type);
+					proxied.pageX = e.pageX;
+					proxied.pageY = e.pageY;
+					proxied.shiftKey = e.shiftKey;
+					proxied.ctrlKey = e.ctrlKey;
+					$(elem).trigger(proxied);
+					return false;
+				});
+			})(item.elem, row);
+			$(item.elem).trigger('glue-menu-activate');
+			if ($(item.elem).css('display') == 'none') {
+				row.remove();
+				continue;
+			}
+			$(item.elem).css('visibility', '');
+		}
+		if (!list.children().length) {
+			group.remove();
+		}
+	};
+
 	return {
 		hide: function() {
 			if (owner) {
@@ -216,6 +363,10 @@ $.glue.contextmenu = function()
 					$(item.elem).detach();
 				}
 				owner = false;
+			}
+			if (panel) {
+				panel.remove();
+				panel = false;
 			}
 		},
 		is_shown: function() {
@@ -318,92 +469,11 @@ $.glue.contextmenu = function()
 					}
 				}
 			}
-			// position items
-			for (var i=0; i < 2; i++) {
-				var target;
-				var cur_left = $(obj).position().left;
-				var cur_top = $(obj).position().top;
-				var offset = 48; // menu offset (when can't calculate height or width)
-				if (i == 0) {
-					target = top;
-					// this is to make sure that the context menu for objects positioned at 0, 0 is accessible
-					// TODO (later): can be improved
-					if (left.length) {
-						if (cur_left-$(left[0].elem).outerWidth(true) < 0) {
-							cur_left = $(left[0].elem).outerWidth(true) + offset;
-						}
-					// if left menu is empty shift top menu right by 48px (to make fisrt icon visible)
-					// TODO: calculate offset dynamically
-					} else {
-						if (cur_left-offset < 0) {
-							cur_left = offset;
-						}
-					}
-				} else {
-					target = left;
-					// this is to make sure that the context menu for objects positioned at 0, 0 is accessible
-					// TODO (later): can be improved
-					if (top.length) {
-						if (cur_top-$(top[0].elem).outerHeight(true) < 0) {
-							cur_top = $(top[0].elem).outerHeight(true);
-						}
-					// if top menu is empty shift left menu down by 48px (to make fisrt icon visible)
-					// TODO: calculate offset dynamically
-					} else {
-						if (cur_top-offset < 0) {
-							cur_top = offset;
-						}
-					}
-				}
-				// add items to dom
-				for (var j=0; j < target.length; j++) {
-					// set crucial css properties
-					$(target[j].elem).attr('id', 'glue-contextmenu-'+target[j].name);
-					if (target == left) {
-						$(target[j].elem).addClass('glue-contextmenu-left');
-					} else {
-						$(target[j].elem).addClass('glue-contextmenu-top');
-					}
-					$(target[j].elem).addClass('glue-ui');
-					$(target[j].elem).css('position', 'absolute');
-					$(target[j].elem).css('visibility', 'hidden');
-					$(target[j].elem).css('z-index', '201');
-					// add to dom and move
-					$('body').append(target[j].elem);
-					if (target == top) {
-						$(target[j].elem).css('left', cur_left+'px');
-						var temp_top = cur_top-$(target[j].elem).outerHeight(true);
-						if (temp_top < 0) {
-							temp_top = 0;
-						}
-						$(target[j].elem).css('top', temp_top+'px');
-						var cur_width = $(target[j].elem).outerWidth(true);
-					} else {
-						var temp_left = cur_left-$(target[j].elem).outerWidth(true);
-						if (temp_left < 0) {
-							temp_left = 0;
-						}
-						$(target[j].elem).css('left', temp_left+'px');
-						$(target[j].elem).css('top', cur_top+'px');
-						var cur_height = $(target[j].elem).outerHeight(true);
-					}
-					// set owner and trigger event
-					$(target[j].elem).data('owner', obj);
-					$(target[j].elem).trigger('glue-menu-activate');
-					// check if we still want to show the icon ;)
-					if ($(target[j].elem).css('display') == 'none') {
-						continue;
-					}
-					// show it for real
-					if (target == left) {
-						cur_top += cur_height;
-					} else {
-						cur_left += cur_width;
-					}
-					$(target[j].elem).css('visibility', '');
-					$(target[j].elem).hide();
-					$(target[j].elem).fadeIn(333);
-				}
+			panel = build_panel(obj);
+			add_panel_group(obj, 'Object', left);
+			add_panel_group(obj, 'Element', top);
+			if (!panel.find('.social-object-action-row').length) {
+				panel.append($('<div class="social-object-empty">Geen acties beschikbaar</div>'));
 			}
 			owner = obj;
 			// reset prev_owner as well
