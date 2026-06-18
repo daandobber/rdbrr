@@ -163,6 +163,13 @@ function video_alter_render_early($args)
 		elem_attr($v, 'audio', 'muted');
 	}
 	elem_append($elem, $v);
+	if ($args['edit']) {
+		$h = elem('div');
+		elem_add_class($h, 'glue-video-handle');
+		elem_add_class($h, 'glue-ui');
+		elem_attr($h, 'title', 'sleep hier om de video te verplaatsen');
+		elem_append($elem, $h);
+	}
 	
 	return true;
 }

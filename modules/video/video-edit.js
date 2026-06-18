@@ -8,6 +8,16 @@
  */
 
 $(document).ready(function() {
+	var ensure_video_handle = function(obj) {
+		if ($(obj).children('.glue-video-handle').length) {
+			return;
+		}
+		$(obj).append($('<div class="glue-video-handle glue-ui" title="sleep hier om de video te verplaatsen"></div>'));
+	};
+	$('.video').live('glue-register', function(e) {
+		ensure_video_handle(this);
+	});
+
 	//
 	// turn video upload into an object
 	//

@@ -4,6 +4,42 @@
 	width: 480px;
 }
 
+.glue-video-handle {
+	background-color: #dedbcf;
+	border: 1px solid #202020;
+	box-shadow: 1px 1px 0 rgba(0, 0, 0, 0.35);
+	box-sizing: border-box;
+	cursor: move;
+	height: 28px;
+	left: 4px;
+	position: absolute;
+	top: 4px;
+	width: 28px;
+	z-index: 2;
+}
+
+.glue-video-handle:before,
+.glue-video-handle:after {
+	background: #202020;
+	content: "";
+	display: block;
+	left: 7px;
+	position: absolute;
+	top: 13px;
+}
+
+.glue-video-handle:before {
+	height: 2px;
+	width: 12px;
+}
+
+.glue-video-handle:after {
+	height: 12px;
+	left: 12px;
+	top: 8px;
+	width: 2px;
+}
+
 #glue-contextmenu-video-autoplay {
 	/* overwrite the default greenish hue for .glue-menu-enabled */
 	background-color: transparent;
