@@ -1212,6 +1212,64 @@ function social_create_profile_subpage($args)
 	));
 }
 
+function social_duplicate_profile_subpage($args)
+{
+	$current = social_current_username();
+	if (!$current) {
+		return response('Je moet ingelogd zijn om een pagina te dupliceren.', 403);
+	}
+	$source = isset($args['source']) ? trim($args['source']) : '';
+	if ($source == '') {
+		return response('Bronpagina ontbreekt.', 400);
+	}
+	$a = expl('.', $source);
+	if (count($a) < 2) {
+		$source = $source.'.head';
+		$a = expl('.', $source);
+	}
+	$owner = social_username_from_profile_page($source);
+	if ($owner === false || (!social_is_admin() && $owner != $current)) {
+		return response('Je kunt alleen je eigen profielpagina dupliceren.', 403);
+	}
+	if (!page_exists($source)) {
+		return response('De bronpagina bestaat niet.', 404);
+	}
+	$slug = isset($args['slug']) ? social_profile_slug_normalize($args['slug']) : '';
+	$title = isset($args['title']) ? trim($args['title']) : '';
+	if ($title == '') {
+		$title = $slug;
+	}
+	if (!social_valid_profile_slug($slug)) {
+		return response('Gebruik alleen letters, cijfers, streepjes of underscores voor de paginanaam.', 400);
+	}
+	$limit = defined('SOCIAL_MAX_PROFILE_PAGES') ? SOCIAL_MAX_PROFILE_PAGES : 5;
+	$pages = social_profile_pages($owner);
+	if (count($pages) >= $limit) {
+		return response('Je kunt maximaal '.$limit.' profielpagina\'s maken.', 400);
+	}
+	$page_name = social_profile_page($owner, $slug);
+	if (page_exists($page_name.'.head')) {
+		return response('Deze profielpagina bestaat al.', 400);
+	}
+	$ret = copy_page(array('old'=>$a[0], 'new'=>$page_name));
+	if (is_array($ret) && isset($ret['#error']) && $ret['#error']) {
+		return $ret;
+	}
+	update_object(array(
+		'name'=>$page_name.'.head.page',
+		'type'=>'page',
+		'module'=>'page',
+		'page-title'=>$title
+	));
+	return response(array(
+		'slug'=>$slug,
+		'page'=>$page_name,
+		'url'=>social_profile_url($owner, $slug),
+		'edit_url'=>social_profile_url($owner, $slug).'/edit',
+		'pages'=>social_profile_pages($owner)
+	));
+}
+
 function social_authenticate($username, $password)
 {
 	$username = social_normalize_username($username);
@@ -1729,4 +1787,5 @@ function social_controller_timeline($args)
 
 if (function_exists('register_service')) {
 	register_service('social_profile.create_page', 'social_create_profile_subpage', array('auth'=>true));
+	register_service('social_profile.duplicate_page', 'social_duplicate_profile_subpage', array('auth'=>true));
 }

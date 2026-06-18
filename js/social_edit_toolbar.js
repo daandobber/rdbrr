@@ -1036,6 +1036,36 @@ $(document).ready(function() {
 		});
 	}
 
+	function suggested_duplicate_slug() {
+		var pages = $.glue.social_profile_pages || [];
+		var taken = {};
+		for (var i=0; i < pages.length; i++) {
+			taken[pages[i].slug] = true;
+		}
+		var current = $.glue.social_profile_slug || 'home';
+		var base = current == 'home' ? 'kopie' : current+'-kopie';
+		if (!taken[base]) {
+			return base;
+		}
+		for (var n=2; n < 100; n++) {
+			if (!taken[base+'-'+n]) {
+				return base+'-'+n;
+			}
+		}
+		return '';
+	}
+
+	function duplicate_profile_page(anchor) {
+		open_single_input_panel(anchor, 'Pagina dupliceren', 'Nieuwe naam', suggested_duplicate_slug(), 'Dupliceer', function(value) {
+			$.glue.backend({ method: 'social_profile.duplicate_page', source: $.glue.page, slug: value }, function(data) {
+				if (data && data.edit_url) {
+					window.location = data.edit_url;
+				}
+			});
+			return false;
+		});
+	}
+
 	function profile_page_items() {
 		var pages = $.glue.social_profile_pages || [];
 		var items = [];
@@ -1048,6 +1078,7 @@ $(document).ready(function() {
 		}
 		var limit = $.glue.social_profile_page_limit || 5;
 		if (pages.length < limit) {
+			items.push(menu_item('Dupliceer huidige...', duplicate_profile_page));
 			items.push(menu_item('Nieuwe pagina...', create_profile_page));
 		} else {
 			items.push(menu_item('Maximaal '+limit+' pagina\'s', function() {
