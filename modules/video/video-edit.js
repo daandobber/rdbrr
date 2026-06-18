@@ -17,6 +17,9 @@ $(document).ready(function() {
 	$('.video').live('glue-register', function(e) {
 		ensure_video_handle(this);
 	});
+	$.glue.object.register_alter_pre_save('video', function(obj, orig) {
+		$(obj).children('.glue-video-handle').remove();
+	});
 
 	//
 	// turn video upload into an object

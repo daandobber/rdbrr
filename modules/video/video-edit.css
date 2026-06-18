@@ -4,6 +4,16 @@
 	width: 480px;
 }
 
+.video > video {
+	border: 0;
+	display: block;
+	outline: none;
+}
+
+.video > video:focus {
+	outline: none;
+}
+
 .glue-video-handle {
 	background-color: #dedbcf;
 	border: 1px solid #202020;
@@ -12,10 +22,18 @@
 	cursor: move;
 	height: 28px;
 	left: 4px;
+	opacity: 0;
+	pointer-events: none;
 	position: absolute;
 	top: 4px;
 	width: 28px;
 	z-index: 2;
+}
+
+.video:hover > .glue-video-handle,
+.video.glue-selected > .glue-video-handle {
+	opacity: 1;
+	pointer-events: auto;
 }
 
 .glue-video-handle:before,
