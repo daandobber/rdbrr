@@ -158,8 +158,8 @@ function controller_default($args)
 				header('Location: '.base_url().'timeline');
 				die();
 			}
-			social_controller_profiles($args);
-			return;
+			header('Location: '.social_login_url());
+			die();
 		}
 		// take the default page
 		$args[0][0] = startpage();
@@ -175,6 +175,7 @@ function controller_default($args)
 	if (social_enabled() && isset($args[0][0])) {
 		$profile_route = social_route_profile_args($args[0]);
 		if ($profile_route !== false) {
+			social_require_profile_login($profile_route);
 			$args[0] = $profile_route;
 			invoke_controller($args);
 			return;
@@ -330,6 +331,7 @@ function invoke_controller($args)
 	if (social_enabled() && isset($args[0][0])) {
 		$profile_route = social_route_profile_args($args[0]);
 		if ($profile_route !== false) {
+			social_require_profile_login($profile_route);
 			$args[0] = $profile_route;
 		} elseif (is_string($args[0][0]) && substr($args[0][0], 0, 1) == '@') {
 			hotglue_error(404);
@@ -465,6 +467,13 @@ function serve_resource($s, $dl)
 		$s = $ret['#data'];
 	}
 	
+	if (social_enabled()) {
+		$username = social_username_from_profile_page($s);
+		if ($username !== false) {
+			social_require_login('u/'.$username);
+		}
+	}
+
 	$obj = load_object(array('name'=>$s));
 	if ($obj['#error']) {
 		return false;

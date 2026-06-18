@@ -1124,6 +1124,29 @@ function social_login_url($next = '')
 }
 
 
+function social_require_login($next = '')
+{
+	if (!social_current_username()) {
+		header('Location: '.social_login_url($next));
+		die();
+	}
+}
+
+
+function social_require_profile_login($profile_route)
+{
+	if (!is_array($profile_route) || !isset($profile_route[0])) {
+		social_require_login();
+	}
+	$username = social_username_from_profile_page($profile_route[0]);
+	$next = $username !== false ? 'u/'.$username : '';
+	if ($next != '' && isset($profile_route[1]) && $profile_route[1] == 'edit') {
+		$next .= '/edit';
+	}
+	social_require_login($next);
+}
+
+
 function social_profile_url($username)
 {
 	return base_url().'u/'.rawurlencode($username);
@@ -1461,6 +1484,7 @@ function social_controller_follow($args)
 
 function social_controller_profiles($args)
 {
+	social_require_login('profiles');
 	$data = social_read_users();
 	ksort($data['users']);
 	$body = '';
