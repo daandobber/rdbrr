@@ -37,7 +37,7 @@ error_reporting(E_ALL & ~E_STRICT);						// see php documentation
 @define('LOCK_TIME', 5000);					// maximum time in ms to wait for an object lock
 @define('LOG_FILE', 'content/log.txt');		// log file, must be writable
 @define('LOG_LEVEL', 'error');				// minimum log level (can be error, warn, info, debug)
-@define('SHORT_URLS', false);				// use short urls internally
+@define('SHORT_URLS', true);				// use short urls internally
 @define('SHOW_FRONTEND_ERRORS', true);
 @define('SITE_NAME', 'rdbrr');
 @define('SOCIAL_ACCOUNTS', true);			// enable account/profile routes for the social fork

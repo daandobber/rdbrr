@@ -46,13 +46,13 @@ http://localhost:8080/
 Useful routes:
 
 ```text
-http://localhost:8080/?register
-http://localhost:8080/?login
+http://localhost:8080/register
+http://localhost:8080/login
 http://localhost:8080/timeline
 http://localhost:8080/feed
-http://localhost:8080/?profiles
-http://localhost:8080/?account
-http://localhost:8080/?admin
+http://localhost:8080/profiles
+http://localhost:8080/account
+http://localhost:8080/admin
 ```
 
 Stop:

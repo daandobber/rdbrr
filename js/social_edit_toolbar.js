@@ -546,7 +546,7 @@ $(document).ready(function() {
 				} else if (data['#error']) {
 					$.glue.error('Upload mislukt ('+data['#data']+').');
 				} else {
-					$('html').css('background-image', 'url('+$.glue.base_url+'?'+page_object_name()+'&'+(new Date().getTime())+')');
+					$('html').css('background-image', 'url('+$.glue.base_url+encodeURIComponent(page_object_name())+'?'+(new Date().getTime())+')');
 					$('html').css('background-size', size.val());
 					$('html').css('background-repeat', repeat.val());
 					apply_background_position(posX.val(), posY.val());
@@ -989,10 +989,10 @@ $(document).ready(function() {
 	});
 
 	menuBar.append(dropdown('Bestand', [
-		menu_link('Profielen', $.glue.base_url+'?profiles'),
+		menu_link('Profielen', $.glue.base_url+'profiles'),
 		menu_link('Feed', $.glue.base_url+'feed'),
-		menu_link('Mijn profiel', $.glue.base_url+'?me'),
-		menu_link('Uitloggen', $.glue.base_url+'?logout')
+		menu_link('Mijn profiel', $.glue.base_url+'me'),
+		menu_link('Uitloggen', $.glue.base_url+'logout')
 	]));
 
 	menuBar.append(dropdown('Weergave', [
@@ -1029,13 +1029,13 @@ $(document).ready(function() {
 	if ($.glue.social_profile_url) {
 		profileItems.push(menu_link('Bekijk pagina', $.glue.social_profile_url));
 	}
-	profileItems.push(menu_link('Profielenlijst', $.glue.base_url+'?profiles'));
+	profileItems.push(menu_link('Profielenlijst', $.glue.base_url+'profiles'));
 	profileItems.push(menu_link('Feed', $.glue.base_url+'feed'));
 	menuBar.append(dropdown('Profiel', profileItems));
 
 	if ($.glue.social_is_admin) {
 		menuBar.append(dropdown('Beheer', [
-			menu_link('Gebruikers beheren', $.glue.base_url+'?admin')
+			menu_link('Gebruikers beheren', $.glue.base_url+'admin')
 		]));
 	}
 

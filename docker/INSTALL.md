@@ -15,11 +15,11 @@ http://localhost:8080/
 
 Useful routes:
 
-* `http://localhost:8080/?register`
-* `http://localhost:8080/?login`
-* `http://localhost:8080/?profiles`
-* `http://localhost:8080/?admin`
-* `http://localhost:8080/?me`
+* `http://localhost:8080/register`
+* `http://localhost:8080/login`
+* `http://localhost:8080/profiles`
+* `http://localhost:8080/admin`
+* `http://localhost:8080/me`
 
 The compose stack bind-mounts the repository into `/app`, so code changes on
 the host are visible immediately. The PHP container writes account and page

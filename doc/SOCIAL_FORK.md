@@ -6,22 +6,22 @@ model.
 
 Routes:
 
-* `?register` creates an account and its profile page.
-* `?login` starts a session.
-* `?logout` ends the session.
-* `?account` lets the current user set display name and upload or set an avatar.
-* `?me` redirects to the current user's timeline.
+* `/register` creates an account and its profile page.
+* `/login` starts a session.
+* `/logout` ends the session.
+* `/account` lets the current user set display name and upload or set an avatar.
+* `/me` redirects to the current user's timeline.
 * `/` redirects logged-in users to `/timeline`.
 * `/timeline` shows updates and authored wall messages by the current user and
   followed users.
 * `/timeline` includes a composer for posting a status update directly.
 * `/feed` shows a chronological feed of profile updates.
-* `?profiles` lists all profiles.
-* `?follow` updates the current user's follow list.
-* `?admin` lets admins manage users.
+* `/profiles` lists all profiles.
+* `/follow` updates the current user's follow list.
+* `/admin` lets admins manage users.
 * `/u/username` shows a profile.
 * `/u/username/edit` edits that profile when the logged-in user owns it.
-* Legacy `?username` and `?@username` links still resolve as fallbacks.
+* Legacy `?username` and `?@username` links still resolve as fallbacks, but generated links use clean paths.
 
 Storage:
 

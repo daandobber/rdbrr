@@ -628,7 +628,7 @@ function social_render_upload_manager($username)
 				$ret .= tab(8).'<span class="social-upload-thumb-empty"></span>'.nl();
 			}
 			$ret .= tab(8).'<div><strong>'.htmlspecialchars($item['label'], ENT_NOQUOTES, 'UTF-8').'</strong><br><span>'.htmlspecialchars($item['file'], ENT_NOQUOTES, 'UTF-8').' - '.htmlspecialchars(social_format_bytes($item['size']), ENT_NOQUOTES, 'UTF-8').'</span></div>'.nl();
-			$ret .= tab(8).'<form method="post" action="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'?account">'.nl();
+			$ret .= tab(8).'<form method="post" action="'.htmlspecialchars(social_url('account'), ENT_COMPAT, 'UTF-8').'">'.nl();
 			$ret .= tab(9).'<input type="hidden" name="account_action" value="delete_upload">'.nl();
 			$ret .= tab(9).'<input type="hidden" name="upload_kind" value="'.htmlspecialchars($item['kind'], ENT_COMPAT, 'UTF-8').'">'.nl();
 			$ret .= tab(9).'<input type="hidden" name="upload_file" value="'.htmlspecialchars($item['file'], ENT_COMPAT, 'UTF-8').'">'.nl();
@@ -1114,13 +1114,23 @@ function social_authorize_service($service, $args)
 }
 
 
-function social_login_url($next = '')
+function social_url($path = '', $params = array())
 {
-	$url = base_url().'?login';
-	if ($next != '') {
-		$url .= '&next='.urlencode($next);
+	$path = ltrim($path, '/');
+	$url = SHORT_URLS ? base_url().$path : base_url().'?'.$path;
+	if (count($params)) {
+		$url .= (strpos($url, '?') === false ? '?' : '&').http_build_query($params, '', '&');
 	}
 	return $url;
+}
+
+function social_login_url($next = '')
+{
+	$params = array();
+	if ($next != '') {
+		$params['next'] = $next;
+	}
+	return social_url('login', $params);
 }
 
 
@@ -1149,19 +1159,19 @@ function social_require_profile_login($profile_route)
 
 function social_profile_url($username)
 {
-	return base_url().'u/'.rawurlencode($username);
+	return social_url('u/'.rawurlencode($username));
 }
 
 
 function social_redirect_url($next)
 {
 	if ($next != '' && substr($next, 0, 2) == 'u/') {
-		return base_url().$next;
+		return social_url($next);
 	}
 	if (in_array($next, array('feed', 'profiles', 'timeline'))) {
-		return base_url().$next;
+		return social_url($next);
 	}
-	return $next != '' ? base_url().'?'.$next : '';
+	return $next != '' ? social_url($next) : '';
 }
 
 
@@ -1173,14 +1183,14 @@ function social_top_nav($active = '', $profile_username = '')
 	if ($current) {
 		$ret .= tab().'<a'.($active == 'timeline' ? ' class="active"' : '').' href="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'timeline">Tijdlijn</a>'.nl();
 		$ret .= tab().'<a'.($active == 'profile' ? ' class="active"' : '').' href="'.htmlspecialchars(social_profile_url($current), ENT_COMPAT, 'UTF-8').'">Mijn profiel</a>'.nl();
-		$ret .= tab().'<a'.($active == 'account' ? ' class="active"' : '').' href="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'?account">Account</a>'.nl();
+		$ret .= tab().'<a'.($active == 'account' ? ' class="active"' : '').' href="'.htmlspecialchars(social_url('account'), ENT_COMPAT, 'UTF-8').'">Account</a>'.nl();
 	}
 	$ret .= tab().'<a'.($active == 'feed' ? ' class="active"' : '').' href="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'feed">Alles</a>'.nl();
-	$ret .= tab().'<a'.($active == 'profiles' ? ' class="active"' : '').' href="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'?profiles">Profielen</a>'.nl();
+	$ret .= tab().'<a'.($active == 'profiles' ? ' class="active"' : '').' href="'.htmlspecialchars(social_url('profiles'), ENT_COMPAT, 'UTF-8').'">Profielen</a>'.nl();
 	if ($current) {
-		$ret .= tab().'<a href="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'?logout">Uitloggen</a>'.nl();
+		$ret .= tab().'<a href="'.htmlspecialchars(social_url('logout'), ENT_COMPAT, 'UTF-8').'">Uitloggen</a>'.nl();
 	} else {
-		$ret .= tab().'<a href="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'?login">Inloggen</a>'.nl();
+		$ret .= tab().'<a href="'.htmlspecialchars(social_url('login'), ENT_COMPAT, 'UTF-8').'">Inloggen</a>'.nl();
 	}
 	if ($profile_username != '') {
 		$ret .= social_follow_form($profile_username, 'u/'.$profile_username, true);
@@ -1200,7 +1210,7 @@ function social_follow_form($target, $next = '', $compact = false)
 	$following = social_is_following($current, $target);
 	$action = $following ? 'unfollow' : 'follow';
 	$label = $following ? 'Ontvolgen' : 'Volgen';
-	$ret = '<form class="social-follow-form'.($compact ? ' compact' : '').'" method="post" action="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'?follow">';
+	$ret = '<form class="social-follow-form'.($compact ? ' compact' : '').'" method="post" action="'.htmlspecialchars(social_url('follow'), ENT_COMPAT, 'UTF-8').'">';
 	$ret .= '<input type="hidden" name="username" value="'.htmlspecialchars($target, ENT_COMPAT, 'UTF-8').'">';
 	$ret .= '<input type="hidden" name="action" value="'.htmlspecialchars($action, ENT_COMPAT, 'UTF-8').'">';
 	if ($next != '') {
@@ -1302,7 +1312,7 @@ function social_controller_account($args)
 			$ok = social_update_account($display_name, $avatar_url, $error);
 		}
 		if ($ok) {
-			header('Location: '.base_url().'?account');
+			header('Location: '.social_url('account'));
 			die();
 		}
 	}
@@ -1310,7 +1320,7 @@ function social_controller_account($args)
 	$display_name = $user && isset($user['display_name']) ? $user['display_name'] : $current;
 	$avatar_url = $user && isset($user['avatar_url']) ? $user['avatar_url'] : '';
 	$body = tab(5).'<div class="social-account-preview">'.social_avatar_html($current).' <strong>'.htmlspecialchars($display_name, ENT_NOQUOTES, 'UTF-8').'</strong></div>'.nl();
-	$body .= tab(5).'<form class="social-account-form" method="post" enctype="multipart/form-data" action="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'?account">'.nl();
+	$body .= tab(5).'<form class="social-account-form" method="post" enctype="multipart/form-data" action="'.htmlspecialchars(social_url('account'), ENT_COMPAT, 'UTF-8').'">'.nl();
 	$body .= tab(6).'<label>Naam<br><input name="display_name" type="text" value="'.htmlspecialchars($display_name, ENT_COMPAT, 'UTF-8').'"></label>'.nl();
 	$body .= tab(6).'<div class="social-avatar-editor">'.nl();
 	$body .= tab(7).'<label>Profielfoto uploaden<br><input class="social-avatar-file" name="avatar_file" type="file" accept="image/jpeg,image/png,image/gif,image/webp"></label>'.nl();
@@ -1351,12 +1361,12 @@ function social_controller_login($args)
 		}
 		$error = 'Gebruikersnaam of wachtwoord klopt niet.';
 	}
-	$body = tab(5).'<form method="post" action="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'?login'.($next != '' ? '&next='.htmlspecialchars(urlencode($next), ENT_COMPAT, 'UTF-8') : '').'">'.nl();
+	$body = tab(5).'<form method="post" action="'.htmlspecialchars(social_login_url($next), ENT_COMPAT, 'UTF-8').'">'.nl();
 	$body .= tab(6).'<label>Gebruikersnaam<br><input name="username" type="text" autocomplete="username"></label>'.nl();
 	$body .= tab(6).'<label>Wachtwoord<br><input name="password" type="password" autocomplete="current-password"></label>'.nl();
 	$body .= tab(6).'<input type="submit" value="Log in">'.nl();
 	$body .= tab(5).'</form>'.nl();
-	$body .= tab(5).'<p><a id="home" href="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'?register">Maak een account</a></p>'.nl();
+	$body .= tab(5).'<p><a id="home" href="'.htmlspecialchars(social_url('register'), ENT_COMPAT, 'UTF-8').'">Maak een account</a></p>'.nl();
 	social_form_page('Inloggen', $body, $error);
 }
 
@@ -1403,14 +1413,14 @@ function social_controller_admin($args)
 		$body .= tab(6).'</tr>'.nl();
 	}
 	$body .= tab(5).'</table>'.nl();
-	$body .= tab(5).'<p><a id="home" href="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'?profiles">Terug naar profielen</a></p>'.nl();
+	$body .= tab(5).'<p><a id="home" href="'.htmlspecialchars(social_url('profiles'), ENT_COMPAT, 'UTF-8').'">Terug naar profielen</a></p>'.nl();
 	social_form_page('Beheer', $body, $error);
 }
 
 
 function social_admin_action_form($username, $action, $label)
 {
-	$ret = '<form class="social-admin-action" method="post" action="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'?admin">';
+	$ret = '<form class="social-admin-action" method="post" action="'.htmlspecialchars(social_url('admin'), ENT_COMPAT, 'UTF-8').'">';
 	$ret .= '<input type="hidden" name="username" value="'.htmlspecialchars($username, ENT_COMPAT, 'UTF-8').'">';
 	$ret .= '<input type="hidden" name="action" value="'.htmlspecialchars($action, ENT_COMPAT, 'UTF-8').'">';
 	$ret .= '<input type="submit" value="'.htmlspecialchars($label, ENT_COMPAT, 'UTF-8').'">';
@@ -1432,12 +1442,12 @@ function social_controller_register($args)
 			die();
 		}
 	}
-	$body = tab(5).'<form method="post" action="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'?register">'.nl();
+	$body = tab(5).'<form method="post" action="'.htmlspecialchars(social_url('register'), ENT_COMPAT, 'UTF-8').'">'.nl();
 	$body .= tab(6).'<label>Gebruikersnaam<br><input name="username" type="text" pattern="[a-z0-9_]{3,32}" autocomplete="username"></label>'.nl();
 	$body .= tab(6).'<label>Wachtwoord<br><input name="password" type="password" autocomplete="new-password"></label>'.nl();
 	$body .= tab(6).'<input type="submit" value="Account maken">'.nl();
 	$body .= tab(5).'</form>'.nl();
-	$body .= tab(5).'<p><a id="home" href="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'?login">Ik heb al een account</a></p>'.nl();
+	$body .= tab(5).'<p><a id="home" href="'.htmlspecialchars(social_url('login'), ENT_COMPAT, 'UTF-8').'">Ik heb al een account</a></p>'.nl();
 	social_form_page('Account maken', $body, $error);
 }
 
@@ -1445,7 +1455,7 @@ function social_controller_register($args)
 function social_controller_logout($args)
 {
 	social_logout();
-	header('Location: '.base_url().'?login');
+	header('Location: '.social_url('login'));
 	die();
 }
 
@@ -1497,12 +1507,12 @@ function social_controller_profiles($args)
 	$body .= tab(5).'<p><a id="home" href="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'timeline">Tijdlijn</a> - <a id="home" href="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'feed">Alles</a></p>'.nl();
 	$current = social_current_username();
 	if ($current) {
-		$body .= tab(5).'<p><a href="'.htmlspecialchars(social_profile_url($current), ENT_COMPAT, 'UTF-8').'/edit">Mijn profiel bewerken</a> - <a href="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'?logout">Uitloggen</a></p>'.nl();
+		$body .= tab(5).'<p><a href="'.htmlspecialchars(social_profile_url($current), ENT_COMPAT, 'UTF-8').'/edit">Mijn profiel bewerken</a> - <a href="'.htmlspecialchars(social_url('logout'), ENT_COMPAT, 'UTF-8').'">Uitloggen</a></p>'.nl();
 		if (social_is_admin()) {
-			$body .= tab(5).'<p><a id="home" href="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'?admin">Beheer</a></p>'.nl();
+			$body .= tab(5).'<p><a id="home" href="'.htmlspecialchars(social_url('admin'), ENT_COMPAT, 'UTF-8').'">Beheer</a></p>'.nl();
 		}
 	} else {
-		$body .= tab(5).'<p><a href="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'?login">Inloggen</a> - <a href="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'?register">Account maken</a></p>'.nl();
+		$body .= tab(5).'<p><a href="'.htmlspecialchars(social_url('login'), ENT_COMPAT, 'UTF-8').'">Inloggen</a> - <a href="'.htmlspecialchars(social_url('register'), ENT_COMPAT, 'UTF-8').'">Account maken</a></p>'.nl();
 	}
 	social_form_page('Profielen', $body);
 }

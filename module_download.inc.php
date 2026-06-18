@@ -124,7 +124,7 @@ function download_render_object($args)
 	if (!$args['edit']) {
 		// put link to file around the element
 		if (SHORT_URLS) {
-			$link = base_url().urlencode($obj['name']).'&download=1';
+			$link = base_url().urlencode($obj['name']).'?download=1';
 		} else {
 			$link = base_url().'?'.urlencode($obj['name']).'&download=1';
 		}

@@ -467,7 +467,7 @@ function social_microblog_feed_page()
 	body_append(tab(4).'<div id="main">'.nl());
 	body_append(tab(5).'<h1 id="error-title">Alles</h1>'.nl());
 	body_append(tab(5).social_microblog_render_feed_items());
-	body_append(tab(5).'<p><a id="home" href="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'timeline">Tijdlijn</a> - <a id="home" href="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'?profiles">Profielen</a></p>'.nl());
+	body_append(tab(5).'<p><a id="home" href="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'timeline">Tijdlijn</a> - <a id="home" href="'.htmlspecialchars(social_url('profiles'), ENT_COMPAT, 'UTF-8').'">Profielen</a></p>'.nl());
 	body_append(tab(4).'</div>'.nl());
 	body_append(tab(3).'</div>'.nl());
 	body_append(tab(2).'</div>'.nl());
@@ -512,7 +512,7 @@ function social_microblog_timeline_page()
 		body_append(tab(5).'<p class="social-notice">Je volgt nog niemand. Voeg mensen toe via Profielen; daarna verschijnen hun updates en berichten hier chronologisch.</p>'.nl());
 	}
 	body_append(tab(5).social_microblog_render_feed_items($authors, 'Nog geen updates of berichten van jou of mensen die je volgt.').nl());
-	body_append(tab(5).'<p><a id="home" href="'.htmlspecialchars(base_url(), ENT_COMPAT, 'UTF-8').'?profiles">Mensen zoeken</a> - <a id="home" href="'.htmlspecialchars(social_profile_url($current), ENT_COMPAT, 'UTF-8').'/edit">Mijn profiel bewerken</a></p>'.nl());
+	body_append(tab(5).'<p><a id="home" href="'.htmlspecialchars(social_url('profiles'), ENT_COMPAT, 'UTF-8').'">Mensen zoeken</a> - <a id="home" href="'.htmlspecialchars(social_profile_url($current), ENT_COMPAT, 'UTF-8').'/edit">Mijn profiel bewerken</a></p>'.nl());
 	body_append(tab(4).'</div>'.nl());
 	body_append(tab(3).'</div>'.nl());
 	body_append(tab(2).'</div>'.nl());
