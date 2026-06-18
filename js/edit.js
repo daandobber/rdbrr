@@ -510,26 +510,96 @@ $.glue.contextmenu = function()
 		var pair = function(range, value) {
 			return $('<div class="social-object-range-pair"></div>').append(range).append(value);
 		};
+		var save = function() {
+			clearTimeout($(obj).data('social-object-base-save'));
+			$(obj).data('social-object-base-save', setTimeout(function() {
+				$.glue.object.save(obj);
+			}, 150));
+		};
+		var sync_number = function(range, value, min, max, callback) {
+			var apply = function(raw) {
+				var n = parseInt(raw, 10);
+				if (isNaN(n)) {
+					return;
+				}
+				n = Math.max(min, Math.min(max, n));
+				range.val(n);
+				value.val(n);
+				callback(n);
+				save();
+			};
+			range.bind('input change', function() { apply($(this).val()); });
+			value.bind('keyup change', function() { apply($(this).val()); });
+		};
+		var make_border_visible = function() {
+			$(obj).css('box-sizing', 'border-box');
+			if (border_style.val() == 'none') {
+				border_style.val('solid');
+				$(obj).css('border-style', 'solid');
+			}
+			if (parseInt(border_width_value.val(), 10) <= 0) {
+				border_width_range.val(1);
+				border_width_value.val(1);
+				$(obj).css('border-width', '1px');
+			}
+		};
+
 		var opacity = Math.round((parseFloat($(obj).css('opacity')) || 1)*100);
 		var opacity_range = $('<input type="range" min="0" max="100" step="1" title="Transparantie">').val(opacity);
 		var opacity_value = $('<input type="number" min="0" max="100" step="1" title="Transparantie percentage">').val(opacity);
 		control('Transparantie', pair(opacity_range, opacity_value));
+		sync_number(opacity_range, opacity_value, 0, 100, function(n) {
+			$(obj).css('opacity', n/100);
+		});
+
+		var border_color = control('Rand', $('<input type="color" title="Randkleur">').val(rgb_to_hex($(obj).css('border-top-color'))));
+		var border_width = Math.round(px_number($(obj).css('border-top-width'), 0));
+		var border_width_range = $('<input type="range" min="0" max="80" step="1" title="Randdikte">').val(border_width);
+		var border_width_value = $('<input type="number" min="0" max="200" step="1" title="Randdikte pixels">').val(border_width);
+		control('Dikte', pair(border_width_range, border_width_value));
+		var border_style = $('<select title="Randstijl"></select>')
+			.append('<option value="none">Geen</option>')
+			.append('<option value="solid">Lijn</option>')
+			.append('<option value="dashed">Streep</option>')
+			.append('<option value="dotted">Punten</option>')
+			.append('<option value="double">Dubbel</option>');
+		border_style.val($(obj).css('border-top-style') || 'none');
+		control('Soort', border_style);
+		var radius = Math.round(px_number($(obj).css('border-top-left-radius'), 0));
+		var radius_range = $('<input type="range" min="0" max="120" step="1" title="Hoekradius">').val(radius);
+		var radius_value = $('<input type="number" min="0" max="300" step="1" title="Hoekradius pixels">').val(radius);
+		control('Hoek', pair(radius_range, radius_value));
 		var css_button = $('<button type="button" class="social-object-css-button" title="Custom CSS voor dit object">CSS...</button>');
 		control('CSS', css_button);
-		css_button.bind('click', function() { open_object_css_panel(obj); return false; });
-		var apply_opacity = function(value) {
-			var n = parseInt(value, 10);
-			if (isNaN(n)) {
-				return;
+
+		border_color.bind('change', function() {
+			make_border_visible();
+			$(obj).css('border-color', $(this).val());
+			save();
+		});
+		sync_number(border_width_range, border_width_value, 0, 200, function(n) {
+			$(obj).css('box-sizing', 'border-box');
+			$(obj).css('border-width', n+'px');
+			if (n > 0 && border_style.val() == 'none') {
+				border_style.val('solid');
+				$(obj).css('border-style', 'solid');
 			}
-			n = Math.max(0, Math.min(100, n));
-			opacity_range.val(n);
-			opacity_value.val(n);
-			$(obj).css('opacity', n/100);
-			$.glue.object.save(obj);
-		};
-		opacity_range.bind('input change', function() { apply_opacity($(this).val()); });
-		opacity_value.bind('keyup change', function() { apply_opacity($(this).val()); });
+		});
+		border_style.bind('change', function() {
+			$(obj).css('box-sizing', 'border-box');
+			$(obj).css('border-style', $(this).val());
+			if ($(this).val() != 'none' && parseInt(border_width_value.val(), 10) <= 0) {
+				border_width_range.val(1);
+				border_width_value.val(1);
+				$(obj).css('border-width', '1px');
+			}
+			save();
+		});
+		sync_number(radius_range, radius_value, 0, 300, function(n) {
+			$(obj).css('border-radius', n+'px');
+			$(obj).children('img, iframe, video').css('border-radius', 'inherit');
+		});
+		css_button.bind('click', function() { open_object_css_panel(obj); return false; });
 	};
 	var add_text_style_group = function(obj) {
 		if (!$(obj).hasClass('text')) {
