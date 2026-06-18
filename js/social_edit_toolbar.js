@@ -799,6 +799,26 @@ $(document).ready(function() {
 		refresh_layers_panel();
 	}
 
+	function bring_selected_layers_into_view() {
+		var selected = selected_layer_objects();
+		if (!selected) {
+			return;
+		}
+		var centerX = $(window).scrollLeft()+Math.round($(window).width()/2);
+		var centerY = $(window).scrollTop()+Math.round($(window).height()/2);
+		selected.each(function(index) {
+			var width = $(this).outerWidth() || 120;
+			var height = $(this).outerHeight() || 80;
+			var offset = index*24;
+			$(this).css({
+				left: Math.max(0, Math.round(centerX-(width/2)+offset))+'px',
+				top: Math.max(0, Math.round(centerY-(height/2)+offset))+'px'
+			});
+			$.glue.object.save(this);
+		});
+		refresh_layers_panel();
+	}
+
 	function show_layers_panel() {
 		var existing = $('#social-editor-layers-panel');
 		if (existing.length) {
@@ -812,7 +832,8 @@ $(document).ready(function() {
 		var up = $('<button type="button" title="Naar voren">Boven</button>');
 		var down = $('<button type="button" title="Naar achteren">Onder</button>');
 		var refresh = $('<button type="button" title="Vernieuwen">Ververs</button>');
-		actions.append(up).append(down).append(refresh);
+		var inView = $('<button type="button" title="Zet geselecteerde laag terug in beeld">In beeld</button>');
+		actions.append(up).append(down).append(inView).append(refresh);
 		panel.append(head).append(actions).append($('<div class="social-layers-list"></div>'));
 		panel.css({
 			left: Math.max(64, $(window).width()-250)+'px',
@@ -833,6 +854,10 @@ $(document).ready(function() {
 		});
 		down.bind('click', function() {
 			move_selected_layers('down');
+			return false;
+		});
+		inView.bind('click', function() {
+			bring_selected_layers_into_view();
 			return false;
 		});
 		refresh.bind('click', function() {

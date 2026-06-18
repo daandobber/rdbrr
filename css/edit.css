@@ -498,7 +498,7 @@
 .social-layers-actions {
 	display: grid;
 	gap: 4px;
-	grid-template-columns: 1fr 1fr 1fr;
+	grid-template-columns: 1fr 1fr;
 	margin-bottom: 6px;
 }
 
