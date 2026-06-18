@@ -151,6 +151,13 @@ function page_render_object($args)
 	if (!empty($obj['page-background-repeat'])) {
 		html_css('background-repeat', $obj['page-background-repeat']);
 	}
+	// custom page CSS
+	if (!empty($obj['page-custom-css-b64'])) {
+		$css = base64_decode($obj['page-custom-css-b64'], true);
+		if ($css !== false && trim($css) !== '') {
+			html_add_css_inline($css, 9);
+		}
+	}
 	// set the html title
 	if (isset($obj['page-title'])) {
 		html_title($obj['page-title']);

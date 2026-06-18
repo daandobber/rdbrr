@@ -301,6 +301,86 @@ $(document).ready(function() {
 		return $.glue.page+'.page';
 	}
 
+	function encode_custom_css(value) {
+		return window.btoa(unescape(encodeURIComponent(value || '')));
+	}
+
+	function decode_custom_css(value) {
+		if (!value) {
+			return '';
+		}
+		try {
+			return decodeURIComponent(escape(window.atob(value)));
+		} catch (e) {
+			return '';
+		}
+	}
+
+	function apply_page_custom_css(css) {
+		var style = $('#rdbrr-page-custom-css');
+		if (!style.length) {
+			style = $('<style id="rdbrr-page-custom-css"></style>').appendTo('head');
+		}
+		style.text(css || '');
+	}
+
+	function open_css_editor_panel(anchor, title, initialValue, action) {
+		close_editor_panel();
+		var panel = $('<div class="social-editor-popover social-css-editor-panel glue-ui"></div>');
+		var head = $('<div class="social-editor-popover-head"><strong></strong><button type="button" title="Sluiten">x</button></div>');
+		var textarea = $('<textarea spellcheck="false" placeholder="Schrijf hier je CSS"></textarea>').val(initialValue || '');
+		var actions = $('<div class="social-editor-popover-actions"></div>');
+		var clear = $('<button type="button">Wissen</button>');
+		var apply = $('<button type="button">Opslaan</button>');
+		head.find('strong').text(title);
+		actions.append(clear).append(apply);
+		panel.append(head).append(textarea).append(actions);
+		var pos = $(anchor).offset() || { left: 80, top: 40 };
+		panel.css({
+			left: Math.max(8, pos.left)+'px',
+			top: Math.max(38, pos.top + 24)+'px'
+		});
+		$('body').append(panel);
+		$.glue.social_window.make_draggable(panel, head);
+		panel.bind('mousedown click dblclick', function(e) {
+			e.stopPropagation();
+		});
+		head.find('button').bind('click', function() {
+			close_editor_panel();
+			return false;
+		});
+		clear.bind('click', function() {
+			textarea.val('').focus();
+			return false;
+		});
+		apply.bind('click', function() {
+			action(textarea.val());
+			close_editor_panel();
+			return false;
+		});
+		textarea.focus();
+		setTimeout(function() {
+			$('html').bind('mousedown.socialEditorPopover', function(e) {
+				if (!$(e.target).parents('.social-editor-popover').length) {
+					close_editor_panel();
+				}
+			});
+		}, 0);
+		return panel;
+	}
+
+	function open_page_css_panel(anchor) {
+		$.glue.backend({ method: 'glue.load_object', name: page_object_name() }, function(data) {
+			open_css_editor_panel(anchor, 'Pagina CSS', decode_custom_css(data && data['page-custom-css-b64']), function(css) {
+				var payload = { method: 'glue.update_object', name: page_object_name() };
+				payload['page-custom-css-b64'] = encode_custom_css(css);
+				$.glue.backend(payload, function() {
+					apply_page_custom_css(css);
+				});
+			});
+		});
+	}
+
 	function set_page_title(anchor) {
 		open_single_input_panel(anchor, 'Pagina', 'Titel', $('title').text(), 'Opslaan', function(title) {
 			$('title').text(title);
@@ -898,6 +978,7 @@ $(document).ready(function() {
 			menu_item('Titel wijzigen...', set_page_title),
 			menu_separator(),
 			menu_item('Achtergrond...', open_background_panel),
+			menu_item('CSS...', open_page_css_panel),
 			menu_separator(),
 			menu_item('Rastergrootte...', set_grid_size)
 		])

@@ -860,3 +860,28 @@
 .social-align-right span { margin-left: auto; }
 
 .social-align-justify span { width: 12px; }
+
+.social-css-editor-panel {
+	width: 520px;
+}
+
+.social-css-editor-panel textarea {
+	background: #fff;
+	border-color: #777 #fff #fff #777;
+	border-style: solid;
+	border-width: 1px;
+	box-sizing: border-box;
+	color: #111;
+	display: block;
+	font-family: "Courier New", Courier, monospace;
+	font-size: 12px;
+	height: 300px;
+	line-height: 16px;
+	padding: 7px;
+	resize: both;
+	width: 100%;
+}
+
+.social-object-css-button {
+	text-align: center;
+}

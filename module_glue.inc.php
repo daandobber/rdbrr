@@ -772,6 +772,20 @@ register_service('glue.pagenames', 'pagenames');
  *	@return array response
  *		html
  */
+function glue_decode_custom_css($value)
+{
+	$css = base64_decode($value, true);
+	if ($css === false) {
+		return '';
+	}
+	return $css;
+}
+
+function glue_css_attr_value($value)
+{
+	return str_replace(array('\\', '"'), array('\\\\', '\\"'), $value);
+}
+
 function render_object($args)
 {
 	// maybe move this to common.inc.php in the future and get rid of some of 
@@ -803,6 +817,12 @@ function render_object($args)
 		// make sure object has a tailing newline
 		if (!empty($temp[0]) && 0 < strlen($temp[0]) && substr($temp[0], -1) != "\n") {
 			$temp[0] .= nl();
+		}
+		if (!empty($obj['object-custom-css-b64'])) {
+			$css = glue_decode_custom_css($obj['object-custom-css-b64']);
+			if (trim($css) !== '') {
+				html_add_css_inline('[id="'.glue_css_attr_value($obj['name']).'"] {' . "\n" . $css . "\n" . '}', 9);
+			}
 		}
 		body_append($temp[0]);
 		// return the element as html-string as well

@@ -325,6 +325,7 @@ $.glue.contextmenu = function()
 		'text-background-transparent': true,
 		'text-font-size': true,
 		'text-font-color': true,
+		'text-font-face': true,
 		'text-font-style': true,
 		'text-line-height': true,
 		'text-letter-spacing': true,
@@ -338,7 +339,9 @@ $.glue.contextmenu = function()
 			return;
 		}
 		var group = $('<div class="social-object-group"></div>');
-		group.append($('<div class="social-object-group-title"></div>').text(title));
+		if (title) {
+			group.append($('<div class="social-object-group-title"></div>').text(title));
+		}
 		var list = $('<div class="social-object-action-list"></div>');
 		group.append(list);
 		panel.append(group);
@@ -411,6 +414,90 @@ $.glue.contextmenu = function()
 		return isNaN(n) ? fallback : n;
 	};
 
+	var encode_custom_css = function(value) {
+		return window.btoa(unescape(encodeURIComponent(value || '')));
+	};
+
+	var decode_custom_css = function(value) {
+		if (!value) {
+			return '';
+		}
+		try {
+			return decodeURIComponent(escape(window.atob(value)));
+		} catch (e) {
+			return '';
+		}
+	};
+
+	var object_custom_css_style_id = function(id) {
+		return 'rdbrr-object-custom-css-'+String(id).replace(/[^a-zA-Z0-9_-]/g, '_');
+	};
+
+	var css_attr_value = function(value) {
+		return String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+	};
+
+	var apply_object_custom_css = function(obj, css) {
+		var id = $(obj).attr('id');
+		var style_id = object_custom_css_style_id(id);
+		var style = document.getElementById(style_id);
+		if (!css) {
+			if (style) {
+				$(style).remove();
+			}
+			return;
+		}
+		if (!style) {
+			style = document.createElement('style');
+			style.id = style_id;
+			document.getElementsByTagName('head')[0].appendChild(style);
+		}
+		$(style).text('[id="'+css_attr_value(id)+'"] {\n'+css+'\n}');
+	};
+
+	var open_object_css_panel = function(obj) {
+		$('.social-object-css-popover').remove();
+		var id = $(obj).attr('id');
+		var popup = $('<div class="social-editor-popover social-css-editor-panel social-object-css-popover glue-ui"></div>');
+		var head = $('<div class="social-editor-popover-head"><strong>Object CSS</strong><button type="button" title="Sluiten">x</button></div>');
+		var textarea = $('<textarea spellcheck="false" placeholder="Bijv. border: 1px solid #111;\nbox-shadow: 4px 4px 0 #000;"></textarea>');
+		var actions = $('<div class="social-editor-popover-actions"></div>');
+		var clear = $('<button type="button">Wissen</button>');
+		var save = $('<button type="button">Opslaan</button>');
+		popup.append(head).append(textarea).append(actions.append(clear).append(save));
+		var base = panel && panel.length ? panel.offset() : $(obj).offset();
+		popup.css({
+			left: Math.max(8, (base ? base.left : 80)+24)+'px',
+			top: Math.max(38, (base ? base.top : 40)+24)+'px'
+		});
+		$('body').append(popup);
+		popup.bind('mousedown click dblclick', function(e) { e.stopPropagation(); });
+		head.find('button').bind('click', function() { popup.remove(); return false; });
+		if ($.glue.social_window && $.glue.social_window.make_draggable) {
+			$.glue.social_window.make_draggable(popup, head);
+		} else if ($.fn.draggable) {
+			popup.draggable({ addClasses: false, handle: head, cancel: 'button,input,select,textarea' });
+		}
+		$.glue.backend({ method: 'glue.load_object', name: id }, function(data) {
+			textarea.val(decode_custom_css(data && data['object-custom-css-b64']));
+			textarea.focus();
+		});
+		clear.bind('click', function() {
+			textarea.val('');
+			return false;
+		});
+		save.bind('click', function() {
+			var css = textarea.val();
+			var payload = { method: 'glue.update_object', name: id };
+			payload['object-custom-css-b64'] = encode_custom_css(css);
+			$.glue.backend(payload, function() {
+				apply_object_custom_css(obj, css);
+				popup.remove();
+			});
+			return false;
+		});
+	};
+
 	var add_object_style_group = function(obj) {
 		var group = $('<div class="social-object-group social-object-base-controls"></div>');
 		var list = $('<div class="social-object-style-list"></div>');
@@ -427,6 +514,9 @@ $.glue.contextmenu = function()
 		var opacity_range = $('<input type="range" min="0" max="100" step="1" title="Transparantie">').val(opacity);
 		var opacity_value = $('<input type="number" min="0" max="100" step="1" title="Transparantie percentage">').val(opacity);
 		control('Transparantie', pair(opacity_range, opacity_value));
+		var css_button = $('<button type="button" class="social-object-css-button" title="Custom CSS voor dit object">CSS...</button>');
+		control('CSS', css_button);
+		css_button.bind('click', function() { open_object_css_panel(obj); return false; });
 		var apply_opacity = function(value) {
 			var n = parseInt(value, 10);
 			if (isNaN(n)) {
@@ -802,8 +892,7 @@ $.glue.contextmenu = function()
 				}
 			}
 			panel = build_panel(obj);
-			add_panel_group(obj, '', left);
-			add_panel_group(obj, 'Stijl', top);
+			add_panel_group(obj, '', left.concat(top));
 			add_object_style_group(obj);
 			add_text_style_group(obj);
 			add_social_style_group(obj);
