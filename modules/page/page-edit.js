@@ -292,4 +292,18 @@ $(document).ready(function() {
 		return false;
 	});
 	$.glue.menu.register('page', elem, 13);
+
+	elem = $('<div id="glue-menu-page-mobile-layout" class="glue-mobile-layout-menu-item" title="mobiele weergave bekijken en aanpassen">M</div>');
+	$(elem).bind('glue-menu-activate', function(e) {
+		$(this).toggleClass('glue-menu-enabled', $.glue.mobile_layout && $.glue.mobile_layout.active());
+		$(this).toggleClass('glue-menu-disabled', !($.glue.mobile_layout && $.glue.mobile_layout.active()));
+	});
+	$(elem).bind('click', function(e) {
+		if ($.glue.mobile_layout) {
+			$.glue.mobile_layout.toggle();
+		}
+		$.glue.menu.hide();
+		return false;
+	});
+	$.glue.menu.register('page', elem, 14);
 });

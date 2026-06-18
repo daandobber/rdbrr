@@ -112,6 +112,38 @@
 	/* all ui elements should use this class */
 }
 
+body.glue-mobile-layout-edit {
+	box-shadow: inset -2px 0 #0a4fb1;
+}
+
+body.glue-mobile-layout-edit:after {
+	background: #0a4fb1;
+	color: #fff;
+	content: attr(data-mobile-layout-label);
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
+	font-size: 11px;
+	left: 50px;
+	padding: 4px 7px;
+	pointer-events: none;
+	position: fixed;
+	top: 32px;
+	z-index: 260;
+}
+
+.glue-mobile-layout-menu-item {
+	background: #dedbcf;
+	border: solid 1px #202020;
+	box-sizing: border-box;
+	color: #111;
+	font-family: Verdana, Geneva, Tahoma, sans-serif;
+	font-size: 18px;
+	font-weight: bold;
+	height: 32px;
+	line-height: 30px;
+	text-align: center;
+	width: 32px;
+}
+
 #social-editor-top-pane {
 	background: #dcd8ca;
 	border-bottom: solid 1px #9c9788;

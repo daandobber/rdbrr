@@ -57,6 +57,8 @@ error_reporting(E_ALL & ~E_STRICT);						// see php documentation
 @define('IMAGE_UPLOAD_RESIZE_TO', '80%');		// target size in n% of window width or height
 @define('OBJECT_DEFAULT_COLORS', '#61b9cf #ff00ff #ffff00');		// default colors for new objects (space-separated string)
 @define('RESERVED_PAGE_NAMES', 'code edit pages');	// page names used internaly and thus unavailable
+@define('MOBILE_LAYOUT_WIDTH', 390);			// width in px used for editing mobile layouts
+@define('MOBILE_LAYOUT_BREAKPOINT', 640);		// max viewport width in px that receives mobile object layouts
 @define('PAGE_DEFAULT_GRID_X', 50);			// default grid x spacing in px
 @define('PAGE_DEFAULT_GRID_Y', 50);			// default grid y spacing in px
 @define('PAGE_GUIDES_X', '');				// show a grid line after n horizontal px (space-separated string)

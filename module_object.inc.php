@@ -30,6 +30,21 @@ function object_shape_clip_path($shape)
 	return '';
 }
 
+function object_mobile_geometry_props()
+{
+	return array('left', 'top', 'width', 'height');
+}
+
+function object_css_attr_value($value)
+{
+	return str_replace(array('\\', '"'), array('\\\\', '\\"'), $value);
+}
+
+function object_valid_mobile_geometry_value($value)
+{
+	return is_string($value) && preg_match('/^-?[0-9.]+(px|%|em|rem|vw|vh)$/', trim($value));
+}
+
 
 function object_alter_render_early($args)
 {
@@ -57,6 +72,11 @@ function object_alter_render_early($args)
 	}
 	if (!empty($obj['object-zindex'])) {
 		elem_css($elem, 'z-index', $obj['object-zindex']);
+	}
+	foreach (object_mobile_geometry_props() as $prop) {
+		if (!empty($obj['object-mobile-'.$prop]) && object_valid_mobile_geometry_value($obj['object-mobile-'.$prop])) {
+			elem_attr($elem, 'data-object-mobile-'.$prop, $obj['object-mobile-'.$prop]);
+		}
 	}
 	if (!empty($obj['object-box-sizing'])) {
 		elem_css($elem, 'box-sizing', $obj['object-box-sizing']);
@@ -89,6 +109,22 @@ function object_alter_render_early($args)
 	}
 	if (!empty($obj['object-shape']) || !empty($obj['object-border-radius'])) {
 		elem_css($elem, 'overflow', 'hidden');
+	}
+	if (!$args['edit']) {
+		$rules = array();
+		foreach (object_mobile_geometry_props() as $prop) {
+			if (!empty($obj['object-mobile-'.$prop]) && object_valid_mobile_geometry_value($obj['object-mobile-'.$prop])) {
+				$rules[] = $prop.': '.$obj['object-mobile-'.$prop].' !important;';
+			}
+		}
+		if (count($rules)) {
+			html_add_css_inline(
+				'@media (max-width: '.intval(MOBILE_LAYOUT_BREAKPOINT).'px) {'."\n".
+				'	[id="'.object_css_attr_value($obj['name']).'"] { '.implode(' ', $rules).' }'."\n".
+				'}',
+				8
+			);
+		}
 	}
 	
 	return true;
@@ -169,6 +205,14 @@ function object_alter_save($args)
 		$obj['object-width'] = elem_css($elem, 'width');
 	} else {
 		unset($obj['object-width']);
+	}
+	foreach (object_mobile_geometry_props() as $prop) {
+		$val = elem_attr($elem, 'data-object-mobile-'.$prop);
+		if ($val !== NULL && $val !== '' && object_valid_mobile_geometry_value($val)) {
+			$obj['object-mobile-'.$prop] = $val;
+		} else {
+			unset($obj['object-mobile-'.$prop]);
+		}
 	}
 	if (elem_css($elem, 'z-index') !== NULL) {
 		$obj['object-zindex'] = elem_css($elem, 'z-index');

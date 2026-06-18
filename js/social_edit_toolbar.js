@@ -988,6 +988,12 @@ $(document).ready(function() {
 		$.glue.grid.update(true);
 	});
 
+	function toggle_mobile_layout() {
+		if ($.glue.mobile_layout) {
+			$.glue.mobile_layout.toggle();
+		}
+	}
+
 	menuBar.append(dropdown('Bestand', [
 		menu_link('Profielen', $.glue.base_url+'profiles'),
 		menu_link('Feed', $.glue.base_url+'feed'),
@@ -998,6 +1004,7 @@ $(document).ready(function() {
 	menuBar.append(dropdown('Weergave', [
 		viewGridItem,
 		viewSnapItem,
+		menu_item('Mobiele weergave', toggle_mobile_layout),
 		menu_item('Lagen', show_layers_panel),
 		submenu('Voorkeuren', [
 			menu_item('Titel wijzigen...', set_page_title),

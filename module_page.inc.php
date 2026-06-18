@@ -167,6 +167,7 @@ function page_render_object($args)
 
 function page_render_page_early($args)
 {
+	html_add_head_inline('<meta name="viewport" content="width=device-width, initial-scale=1">', 1);
 	if ($args['edit']) {
 		if (USE_MIN_FILES) {
 			html_add_js(base_url().'modules/page/page-edit.min.js');
@@ -192,6 +193,8 @@ function page_render_page_early($args)
 			$guide[$i] = intval(trim($guide[$i]));
 		}
 		html_add_js_var('$.glue.conf.page.guides_y', $guide);
+		html_add_js_var('$.glue.conf.page.mobile_layout_width', intval(MOBILE_LAYOUT_WIDTH));
+		html_add_js_var('$.glue.conf.page.mobile_layout_breakpoint', intval(MOBILE_LAYOUT_BREAKPOINT));
 	}
 
 	// set the html title to the page name by default

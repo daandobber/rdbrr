@@ -14,6 +14,11 @@ $.glue.canvas = function()
 			if (elem === undefined) {
 				elem = $('.object');
 			}
+			var viewport_width = $(window).width();
+			var viewport_height = $(window).height();
+			if ($.glue.mobile_layout && $.glue.mobile_layout.active()) {
+				viewport_width = $.glue.mobile_layout.width();
+			}
 			var max_x = 0;
 			var max_y = 0;
 			$(elem).each(function() {
@@ -27,17 +32,186 @@ $.glue.canvas = function()
 			});
 			// make body at least match the window width and height but don't 
 			// send these values to the backend in any case
-			if (max_x < $(window).width()) {
-				max_x = $(window).width();
+			if (max_x < viewport_width) {
+				max_x = viewport_width;
 			}
-			if (max_y < $(window).height()) {
-				max_y = $(window).height();
+			if (max_y < viewport_height) {
+				max_y = viewport_height;
 			}
 			// resize body
 			$('body').css('width', max_x+'px');
 			$('body').css('height', max_y+'px');
 			// update grid
 			$.glue.grid.update();
+		}
+	};
+}();
+
+$.glue.mobile_layout = function()
+{
+	var active = false;
+	var props = ['left', 'top', 'width', 'height'];
+	var width = ($.glue.conf && $.glue.conf.page && $.glue.conf.page.mobile_layout_width) ? parseInt($.glue.conf.page.mobile_layout_width, 10) : 390;
+
+	var css_value = function(obj, prop) {
+		var value = $(obj).css(prop);
+		if (value === undefined || value === null || value == 'auto') {
+			if (prop == 'left') {
+				return Math.round($(obj).position().left)+'px';
+			}
+			if (prop == 'top') {
+				return Math.round($(obj).position().top)+'px';
+			}
+			if (prop == 'width') {
+				return Math.round($(obj).outerWidth())+'px';
+			}
+			if (prop == 'height') {
+				return Math.round($(obj).outerHeight())+'px';
+			}
+			return '';
+		}
+		return value;
+	};
+
+	var attr_name = function(prop) {
+		return 'data-object-mobile-'+prop;
+	};
+
+	var mobile_value = function(obj, prop, scale) {
+		var value = $(obj).attr(attr_name(prop));
+		if (value) {
+			return value;
+		}
+		var n = parseFloat(css_value(obj, prop));
+		if (isNaN(n)) {
+			return css_value(obj, prop);
+		}
+		if (prop == 'width' || prop == 'height' || prop == 'left' || prop == 'top') {
+			return Math.max(prop == 'width' || prop == 'height' ? 20 : 0, Math.round(n*scale))+'px';
+		}
+		return css_value(obj, prop);
+	};
+
+	var desktop_width = function() {
+		var max = width;
+		$('.object').each(function() {
+			var p = $(this).position();
+			max = Math.max(max, p.left+$(this).outerWidth());
+		});
+		return max;
+	};
+
+	var remember_desktop = function(obj) {
+		var geom = {};
+		for (var i=0; i < props.length; i++) {
+			geom[props[i]] = css_value(obj, props[i]);
+		}
+		$(obj).data('glue-mobile-desktop-geometry', geom);
+	};
+
+	var apply_mobile = function(obj, scale) {
+		for (var i=0; i < props.length; i++) {
+			$(obj).css(props[i], mobile_value(obj, props[i], scale));
+		}
+	};
+
+	var restore_desktop = function(obj) {
+		var geom = $(obj).data('glue-mobile-desktop-geometry');
+		if (!geom) {
+			return;
+		}
+		for (var i=0; i < props.length; i++) {
+			if (geom[props[i]] !== undefined) {
+				$(obj).css(props[i], geom[props[i]]);
+			}
+		}
+		$(obj).removeData('glue-mobile-desktop-geometry');
+	};
+
+	var capture_mobile = function(obj, overrides) {
+		for (var i=0; i < props.length; i++) {
+			var prop = props[i];
+			var value = overrides && overrides[prop] !== undefined ? overrides[prop] : css_value(obj, prop);
+			$(obj).attr(attr_name(prop), value);
+		}
+	};
+
+	return {
+		active: function() {
+			return active;
+		},
+		width: function() {
+			return width;
+		},
+		enter: function() {
+			if (active) {
+				return;
+			}
+			if ($.glue.sel) {
+				$.glue.sel.none();
+			}
+			active = true;
+			$('body').addClass('glue-mobile-layout-edit');
+			$('body').attr('data-mobile-layout-label', 'Mobiel '+width+'px');
+			$('body').css('min-width', width+'px');
+			var scale = Math.min(1, width/desktop_width());
+			$('.object').each(function() {
+				remember_desktop(this);
+				apply_mobile(this, scale);
+				if ($(this).hasClass('resizable')) {
+					$.glue.object.resizable_update_tooltip(this);
+				}
+			});
+			$.glue.canvas.update();
+			$.glue.grid.update(true);
+		},
+		leave: function() {
+			if (!active) {
+				return;
+			}
+			if ($.glue.sel) {
+				$.glue.sel.none();
+			}
+			$('.object').each(function() {
+				capture_mobile(this);
+				$.glue.object.save(this);
+				restore_desktop(this);
+				if ($(this).hasClass('resizable')) {
+					$.glue.object.resizable_update_tooltip(this);
+				}
+			});
+			active = false;
+			$('body').removeClass('glue-mobile-layout-edit');
+			$('body').removeAttr('data-mobile-layout-label');
+			$('body').css('min-width', '');
+			$.glue.canvas.update();
+			$.glue.grid.update(true);
+		},
+		toggle: function() {
+			if (active) {
+				this.leave();
+			} else {
+				this.enter();
+			}
+		},
+		prepare_save_clone: function(clone, orig, overrides) {
+			if (!active) {
+				return false;
+			}
+			for (var i=0; i < props.length; i++) {
+				var prop = props[i];
+				var value = overrides && overrides[prop] !== undefined ? overrides[prop] : css_value(orig, prop);
+				$(clone).attr(attr_name(prop), value);
+			}
+			var geom = $(orig).data('glue-mobile-desktop-geometry');
+			if (geom) {
+				for (i=0; i < props.length; i++) {
+					if (geom[props[i]] !== undefined) {
+						$(clone).css(props[i], geom[props[i]]);
+					}
+				}
+			}
+			return true;
 		}
 	};
 }();
@@ -1478,6 +1652,9 @@ $.glue.object = function()
 		$.glue.object.register_alter_pre_save('object', function(obj, orig) {
 			// remove the jqueryui draggable-related stuff from the object
 			$(obj).removeClass('ui-draggable-dragging');
+			if ($.glue.mobile_layout) {
+				$.glue.mobile_layout.prepare_save_clone(obj, orig);
+			}
 		});
 		$.glue.object.register_alter_pre_save('glue-selected', function(obj, orig) {
 			var border = $(orig).outerHeight()-$(orig).innerHeight();
@@ -1487,6 +1664,12 @@ $.glue.object = function()
 			// and remove border offset
 			$(obj).css('left', (p.left+border/2)+'px');
 			$(obj).css('top', (p.top+border/2)+'px');
+			if ($.glue.mobile_layout) {
+				$.glue.mobile_layout.prepare_save_clone(obj, orig, {
+					left: (p.left+border/2)+'px',
+					top: (p.top+border/2)+'px'
+				});
+			}
 			//$(obj).css('width', ($(orig).width()+border)+'px');
 			//$(obj).css('height', ($(orig).height()+border)+'px');
 		});
