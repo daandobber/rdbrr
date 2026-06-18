@@ -883,7 +883,7 @@ $(document).ready(function() {
 	menuBar.append($('<div class="social-editor-brand">rdbrr</div>'));
 
 	function menu_item(label, action) {
-		var item = $('<button type="button" class="social-editor-menu-item">'+label+'</button>');
+		var item = $('<button type="button" class="social-editor-menu-item"></button>').text(label);
 		stop_canvas_events(item);
 		item.bind('click', function() {
 			action(item);
@@ -906,7 +906,7 @@ $(document).ready(function() {
 
 	function submenu(label, items) {
 		var sub = $('<div class="social-editor-submenu"></div>');
-		var trigger = $('<button type="button" class="social-editor-menu-item social-editor-submenu-trigger">'+label+'</button>');
+		var trigger = $('<button type="button" class="social-editor-menu-item social-editor-submenu-trigger"></button>').text(label);
 		var panel = $('<div class="social-editor-submenu-panel"></div>');
 		var closeTimer = false;
 		stop_canvas_events(sub);
@@ -934,7 +934,7 @@ $(document).ready(function() {
 
 	function dropdown(label, items) {
 		var menu = $('<div class="social-editor-menu"></div>');
-		var trigger = $('<button type="button" class="social-editor-menu-trigger">'+label+'</button>');
+		var trigger = $('<button type="button" class="social-editor-menu-trigger"></button>').text(label);
 		var panel = $('<div class="social-editor-menu-panel"></div>');
 		var closeTimer = false;
 		stop_canvas_events(menu);
@@ -1025,9 +1025,42 @@ $(document).ready(function() {
 		menu_item('Tekstkleur...', prompt_selected_text_color)
 	]));
 
+	function create_profile_page(anchor) {
+		open_single_input_panel(anchor, 'Nieuwe profielpagina', 'Naam', '', 'Maak', function(value) {
+			$.glue.backend({ method: 'social_profile.create_page', slug: value }, function(data) {
+				if (data && data.edit_url) {
+					window.location = data.edit_url;
+				}
+			});
+			return false;
+		});
+	}
+
+	function profile_page_items() {
+		var pages = $.glue.social_profile_pages || [];
+		var items = [];
+		for (var i=0; i < pages.length; i++) {
+			var label = (pages[i].slug == $.glue.social_profile_slug ? '* ' : '')+(pages[i].title || pages[i].slug || 'Pagina');
+			items.push(menu_link(label, pages[i].edit_url));
+		}
+		if (items.length) {
+			items.push(menu_separator());
+		}
+		var limit = $.glue.social_profile_page_limit || 5;
+		if (pages.length < limit) {
+			items.push(menu_item('Nieuwe pagina...', create_profile_page));
+		} else {
+			items.push(menu_item('Maximaal '+limit+' pagina\'s', function() {
+				$.glue.error('Je hebt het maximum van '+limit+' profielpagina\'s bereikt.');
+			}));
+		}
+		return items;
+	}
+
 	var profileItems = [];
 	if ($.glue.social_profile_url) {
 		profileItems.push(menu_link('Bekijk pagina', $.glue.social_profile_url));
+		profileItems.push(submenu('Pagina\'s', profile_page_items()));
 	}
 	profileItems.push(menu_link('Profielenlijst', $.glue.base_url+'profiles'));
 	profileItems.push(menu_link('Feed', $.glue.base_url+'feed'));

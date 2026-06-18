@@ -114,7 +114,15 @@ $(document).ready(function() {
 					old_target = data['#data']['object-target'];
 				}
 				old_linkdata = (old_target == '') ? old_link : old_link + ' ' + old_target;
-				var linkdata = prompt('Enter link (e.g. http://hotglue.me or pagename or anchor name).\nTo add target specify its name after a space (e.g. http://hotglue.me _blank)', old_linkdata);
+				var suggestions = '';
+				if ($.glue.social_profile_pages && $.glue.social_profile_pages.length) {
+					suggestions = '\n\nEigen pagina\'s:';
+					for (var i=0; i < $.glue.social_profile_pages.length; i++) {
+						var page = $.glue.social_profile_pages[i];
+						suggestions += '\n- '+(page.title || page.slug)+': '+page.path;
+					}
+				}
+				var linkdata = prompt('Link invullen. Je kunt een URL, paginapad of objectnaam gebruiken.\nVoor nieuw venster zet je _blank achter de link.'+suggestions, old_linkdata);
 				if (linkdata === null || linkdata == old_link + ' ' + old_target) {
 					return;
 				}

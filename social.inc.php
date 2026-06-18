@@ -183,28 +183,97 @@ function social_user_status($user)
 }
 
 
-function social_profile_page($username)
+function social_profile_slug_normalize($slug)
 {
-	return 'u_'.$username;
+	$slug = strtolower(trim($slug));
+	$slug = preg_replace('/\s+/', '-', $slug);
+	return $slug;
 }
 
 
-function social_route_profile_page($route)
+function social_valid_profile_slug($slug)
+{
+	$slug = social_profile_slug_normalize($slug);
+	if (!preg_match('/^[a-z0-9_-]{1,32}$/', $slug)) {
+		return false;
+	}
+	return !in_array($slug, array('edit', 'home', 'new'));
+}
+
+
+function social_profile_page($username, $slug = 'home')
+{
+	$username = social_normalize_username($username);
+	$slug = social_profile_slug_normalize($slug);
+	return $slug == 'home' ? 'u_'.$username : 'u_'.$username.'--'.$slug;
+}
+
+
+function social_profile_page_parts($page)
+{
+	$a = expl('.', $page);
+	$pagename = $a[0];
+	if (substr($pagename, 0, 2) != 'u_') {
+		return false;
+	}
+	$body = substr($pagename, 2);
+	$pos = strpos($body, '--');
+	if ($pos === false) {
+		$username = $body;
+		$slug = 'home';
+	} else {
+		$username = substr($body, 0, $pos);
+		$slug = substr($body, $pos + 2);
+	}
+	if (!social_valid_username($username)) {
+		return false;
+	}
+	if ($slug != 'home' && !social_valid_profile_slug($slug)) {
+		return false;
+	}
+	return array('username'=>$username, 'slug'=>$slug, 'pagename'=>$pagename);
+}
+
+
+function social_profile_slug_from_page($page)
+{
+	$parts = social_profile_page_parts($page);
+	return $parts === false ? false : $parts['slug'];
+}
+
+
+function social_username_from_profile_page($page)
+{
+	$parts = social_profile_page_parts($page);
+	return $parts === false ? false : $parts['username'];
+}
+
+
+function social_route_profile_page($route, $slug = 'home')
 {
 	if (!is_string($route) || $route == '') {
 		return false;
 	}
 	if (substr($route, 0, 1) == '@') {
 		$username = social_normalize_username(substr($route, 1));
-		return social_valid_username($username) ? social_profile_page($username) : false;
+		$slug = 'home';
+	} else {
+		$username = social_normalize_username($route);
+		$slug = social_profile_slug_normalize($slug);
 	}
-	$username = social_normalize_username($route);
 	if (!social_valid_username($username) || social_reserved_username($username)) {
 		return false;
 	}
+	if ($slug != 'home' && !social_valid_profile_slug($slug)) {
+		return false;
+	}
+	$page = social_profile_page($username, $slug);
+	if (page_exists($page.'.head')) {
+		return $page;
+	}
 	$data = social_read_users();
-	if (isset($data['users'][$username]) || page_exists(social_profile_page($username).'.head')) {
-		return social_profile_page($username);
+	if ($slug == 'home' && isset($data['users'][$username])) {
+		return $page;
 	}
 	return false;
 }
@@ -213,9 +282,18 @@ function social_route_profile_page($route)
 function social_route_profile_args($route)
 {
 	if (is_array($route)) {
+		$slug = 'home';
+		$action = '';
 		if (isset($route[0]) && $route[0] == 'u' && isset($route[1])) {
 			$username = social_normalize_username($route[1]);
-			$action = isset($route[2]) ? $route[2] : '';
+			if (isset($route[2])) {
+				if ($route[2] == 'edit') {
+					$action = 'edit';
+				} else {
+					$slug = social_profile_slug_normalize($route[2]);
+					$action = isset($route[3]) ? $route[3] : '';
+				}
+			}
 		} else {
 			$username = isset($route[0]) ? social_normalize_username($route[0]) : '';
 			$action = isset($route[1]) ? $route[1] : '';
@@ -223,7 +301,7 @@ function social_route_profile_args($route)
 		if (!social_valid_username($username) || ($action != '' && $action != 'edit')) {
 			return false;
 		}
-		$page = social_route_profile_page($username);
+		$page = social_route_profile_page($username, $slug);
 		if ($page === false) {
 			return false;
 		}
@@ -234,17 +312,66 @@ function social_route_profile_args($route)
 }
 
 
-function social_username_from_profile_page($page)
+function social_profile_page_title($page, $slug = 'home')
 {
-	$a = expl('.', $page);
-	$pagename = $a[0];
-	if (substr($pagename, 0, 2) != 'u_') {
-		return false;
+	load_modules('glue');
+	$title = $slug == 'home' ? 'Home' : $slug;
+	$ret = load_object(array('name'=>$page.'.head.page'));
+	if (is_array($ret) && !isset($ret['#error']) && isset($ret['#data']['page-title']) && trim($ret['#data']['page-title']) != '') {
+		$title = trim($ret['#data']['page-title']);
 	}
-	$username = substr($pagename, 2);
-	return social_valid_username($username) ? $username : false;
+	return $title;
 }
 
+
+function social_profile_pages($username)
+{
+	$username = social_normalize_username($username);
+	if (!social_valid_username($username)) {
+		return array();
+	}
+	load_modules('glue');
+	$items = array();
+	$home = social_profile_page($username, 'home');
+	if (page_exists($home.'.head')) {
+		$items[] = array('slug'=>'home', 'page'=>$home);
+	}
+	$prefix = 'u_'.$username.'--';
+	if (is_dir(CONTENT_DIR)) {
+		$dh = @opendir(CONTENT_DIR);
+		if ($dh !== false) {
+			while (($entry = readdir($dh)) !== false) {
+				if (substr($entry, 0, strlen($prefix)) != $prefix) {
+					continue;
+				}
+				$slug = substr($entry, strlen($prefix));
+				if (!social_valid_profile_slug($slug) || !page_exists($entry.'.head')) {
+					continue;
+				}
+				$items[] = array('slug'=>$slug, 'page'=>$entry);
+			}
+			closedir($dh);
+		}
+	}
+	usort($items, function($a, $b) {
+		if ($a['slug'] == 'home') return -1;
+		if ($b['slug'] == 'home') return 1;
+		return strcmp($a['slug'], $b['slug']);
+	});
+	$ret = array();
+	foreach ($items as $item) {
+		$path = $item['slug'] == 'home' ? 'u/'.$username : 'u/'.$username.'/'.$item['slug'];
+		$ret[] = array(
+			'slug'=>$item['slug'],
+			'title'=>social_profile_page_title($item['page'], $item['slug']),
+			'page'=>$item['page'],
+			'path'=>$path,
+			'url'=>social_profile_url($username, $item['slug']),
+			'edit_url'=>social_profile_url($username, $item['slug']).'/edit'
+		);
+	}
+	return $ret;
+}
 
 function social_current_user()
 {
@@ -1026,6 +1153,65 @@ function social_create_profile_page($username)
 }
 
 
+function social_create_profile_subpage($args)
+{
+	$username = social_current_username();
+	if (!$username) {
+		return response('Je moet ingelogd zijn om een pagina te maken.', 403);
+	}
+	$slug = isset($args['slug']) ? social_profile_slug_normalize($args['slug']) : '';
+	$title = isset($args['title']) ? trim($args['title']) : '';
+	if ($title == '') {
+		$title = $slug;
+	}
+	if (!social_valid_profile_slug($slug)) {
+		return response('Gebruik alleen letters, cijfers, streepjes of underscores voor de paginanaam.', 400);
+	}
+	$limit = defined('SOCIAL_MAX_PROFILE_PAGES') ? SOCIAL_MAX_PROFILE_PAGES : 5;
+	$pages = social_profile_pages($username);
+	if (count($pages) >= $limit) {
+		return response('Je kunt maximaal '.$limit.' profielpagina\'s maken.', 400);
+	}
+	$page_name = social_profile_page($username, $slug);
+	$page = $page_name.'.head';
+	if (page_exists($page)) {
+		return response('Deze profielpagina bestaat al.', 400);
+	}
+	$ret = create_page(array('page'=>$page));
+	if (is_array($ret) && isset($ret['#error']) && $ret['#error']) {
+		return $ret;
+	}
+	update_object(array(
+		'name'=>$page.'.page',
+		'type'=>'page',
+		'module'=>'page',
+		'page-title'=>$title,
+		'page-background-color'=>'#f7f3ed'
+	));
+	update_object(array(
+		'name'=>$page.'.intro',
+		'type'=>'text',
+		'module'=>'text',
+		'content'=>$title."\n\nNieuwe pagina. Voeg tekst, beelden en links toe zoals je wilt.",
+		'text-font-size'=>'22px',
+		'text-font-family'=>'DejaVuSans',
+		'text-background-color'=>'#ffffff',
+		'text-padding-x'=>'16px',
+		'text-padding-y'=>'12px',
+		'object-left'=>'80px',
+		'object-top'=>'80px',
+		'object-width'=>'520px',
+		'object-height'=>'150px'
+	));
+	return response(array(
+		'slug'=>$slug,
+		'page'=>$page_name,
+		'url'=>social_profile_url($username, $slug),
+		'edit_url'=>social_profile_url($username, $slug).'/edit',
+		'pages'=>social_profile_pages($username)
+	));
+}
+
 function social_authenticate($username, $password)
 {
 	$username = social_normalize_username($username);
@@ -1052,8 +1238,8 @@ function social_can_edit_page($page)
 	if (social_is_admin()) {
 		return true;
 	}
-	$a = expl('.', $page);
-	return $a[0] == social_profile_page($username);
+	$owner = social_username_from_profile_page($page);
+	return $owner !== false && $owner == $username;
 }
 
 
@@ -1098,7 +1284,8 @@ function social_authorize_service($service, $args)
 		'glue.rename_page'=>true,
 		'glue.set_startpage'=>true,
 		'glue.object_make_symlink'=>true,
-		'page.set_grid'=>true
+		'page.set_grid'=>true,
+		'glue.create_page'=>true
 	);
 	if (isset($denied[$service])) {
 		return response('Deze actie is niet beschikbaar voor profielaccounts.', 403);
@@ -1149,7 +1336,11 @@ function social_require_profile_login($profile_route)
 		social_require_login();
 	}
 	$username = social_username_from_profile_page($profile_route[0]);
+	$slug = social_profile_slug_from_page($profile_route[0]);
 	$next = $username !== false ? 'u/'.$username : '';
+	if ($next != '' && $slug !== false && $slug != 'home') {
+		$next .= '/'.$slug;
+	}
 	if ($next != '' && isset($profile_route[1]) && $profile_route[1] == 'edit') {
 		$next .= '/edit';
 	}
@@ -1157,9 +1348,14 @@ function social_require_profile_login($profile_route)
 }
 
 
-function social_profile_url($username)
+function social_profile_url($username, $slug = 'home')
 {
-	return social_url('u/'.rawurlencode($username));
+	$path = 'u/'.rawurlencode($username);
+	$slug = social_profile_slug_normalize($slug);
+	if ($slug != 'home') {
+		$path .= '/'.rawurlencode($slug);
+	}
+	return social_url($path);
 }
 
 
@@ -1529,4 +1725,8 @@ function social_controller_timeline($args)
 {
 	load_modules('social_microblog');
 	social_microblog_timeline_page();
+}
+
+if (function_exists('register_service')) {
+	register_service('social_profile.create_page', 'social_create_profile_subpage', array('auth'=>true));
 }

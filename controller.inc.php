@@ -104,7 +104,12 @@ function controller_edit($args)
 	if (social_enabled() && AUTH_METHOD == 'social') {
 		$profile_username = social_username_from_profile_page($page);
 		if ($profile_username !== false) {
-			html_add_js_var('$.glue.social_profile_url', social_profile_url($profile_username));
+			$profile_slug = social_profile_slug_from_page($page);
+			html_add_js_var('$.glue.social_profile_username', $profile_username);
+			html_add_js_var('$.glue.social_profile_slug', $profile_slug);
+			html_add_js_var('$.glue.social_profile_url', social_profile_url($profile_username, $profile_slug));
+			html_add_js_var('$.glue.social_profile_pages', social_profile_pages($profile_username));
+			html_add_js_var('$.glue.social_profile_page_limit', defined('SOCIAL_MAX_PROFILE_PAGES') ? SOCIAL_MAX_PROFILE_PAGES : 5);
 		}
 		html_add_js_var('$.glue.social_is_admin', social_is_admin());
 	}
