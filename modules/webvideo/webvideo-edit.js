@@ -8,6 +8,28 @@
  */
 
 $(document).ready(function() {
+	var parse_webvideo = function(url) {
+		var match;
+		match = String(url).match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?.*v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+		if (match) {
+			return { provider: 'youtube', id: match[1] };
+		}
+		match = String(url).match(/(?:vimeo\.com\/(?:video\/)?|player\.vimeo\.com\/video\/)([0-9]+)/);
+		if (match) {
+			return { provider: 'vimeo', id: match[1] };
+		}
+		return false;
+	};
+
+	var build_webvideo_iframe = function(provider, id) {
+		if (provider == 'youtube') {
+			return $('<iframe class="youtube-player" src="https://www.youtube-nocookie.com/embed/'+id+'?rel=0&amp;playsinline=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="allowfullscreen" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" title="YouTube video player" style="border-width: 0px; height: 100%; position: absolute; width: 100%;"></iframe>');
+		} else if (provider == 'vimeo') {
+			return $('<iframe src="https://player.vimeo.com/video/'+id+'?title=0&amp;byline=0&amp;portrait=0&amp;color=ffffff" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen="allowfullscreen" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" title="Vimeo video player" style="border-width: 0px; height: 100%; position: absolute; width: 100%;"></iframe>');
+		}
+		return false;
+	};
+
 	//
 	// menu items
 	//
@@ -18,54 +40,19 @@ $(document).ready(function() {
 			return;
 		}
 		// determine provider
-		var provider = false;
-		if (url.indexOf('youtube') != -1) {
-			var start = url.indexOf('v=');
-			if (start == -1) {
-				$.glue.error('Error understanding the youtube link');
-			} else {
-				start += 2;
-				var end = url.indexOf('&', start);
-				if (end == -1) {
-					end = url.length;
-				}
-				provider = 'youtube';
-				var id = url.slice(start, end);
-			}
-		} else if (url.indexOf('vimeo') != -1) {
-			var start = url.indexOf('.com/');
-			if (start == -1) {
-				$.glue.error('Error understanding the vimeo link');
-			} else {
-				start += 5;
-				provider = 'vimeo';
-				var id = String(parseInt(url.slice(start)));
-			}
-		} else {
+		var video = parse_webvideo(url);
+		if (!video) {
 			$.glue.error('Only youtube and vimeo videos are supported at the moment.');
+			return;
 		}
 		
-		if (provider) {
+		if (video.provider) {
 			// create new object
 			$.glue.backend({ method: 'glue.create_object', 'page': $.glue.page }, function(data) {
 				var elem = $('<div class="webvideo resizable object" style="position: absolute;"></div>');
 				$(elem).attr('id', data['name']);
 				// default width and height is set in the css
-				if (provider == 'youtube') {
-          // use protocol relative url
-					var src = '//';
-        /*
-					if (location.protocol == 'https:') {
-						src = 'https://';
-					} else {
-						src = 'http://';
-					}
-        */
-					var child = $('<iframe class="youtube-player" src="'+src+'www.youtube.com/embed/'+id+'?rel=0" style="border-width: 0px; height: 100%; position: absolute; width: 100%;"></iframe>');
-				} else if (provider == 'vimeo') {
-					var src = '//';
-					var child = $('<iframe src="'+src+'player.vimeo.com/video/'+id+'?title=0&amp;byline=0&amp;portrait=0&amp;color=ffffff" style="border-width: 0px; height: 100%; position: absolute; width: 100%;"></iframe>');
-				}
+				var child = build_webvideo_iframe(video.provider, video.id);
 				$(elem).append(child);
 				// put the iframe behind some shield for editing
 				child = $('<div class="glue-webvideo-handle glue-ui" title="drag here"></div>');
@@ -79,7 +66,7 @@ $(document).ready(function() {
 				$(elem).css('top', (e.pageY-$(elem).outerHeight()/2)+'px');
 				$.glue.object.register(elem);
 				// set the provider and the id in the object file
-				$.glue.backend({ method: 'glue.update_object', name: $(elem).attr('id'), 'webvideo-provider': provider, 'webvideo-id': id });
+				$.glue.backend({ method: 'glue.update_object', name: $(elem).attr('id'), 'webvideo-provider': video.provider, 'webvideo-id': video.id });
 				// and save the element
 				$.glue.object.save(elem);
 			});

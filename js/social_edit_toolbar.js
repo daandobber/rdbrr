@@ -161,37 +161,23 @@ $(document).ready(function() {
 	}
 
 	function parse_webvideo(url) {
-		var start;
-		var end;
-		if (url.indexOf('youtube') != -1) {
-			start = url.indexOf('v=');
-			if (start == -1) {
-				return false;
-			}
-			start += 2;
-			end = url.indexOf('&', start);
-			if (end == -1) {
-				end = url.length;
-			}
-			return { provider: 'youtube', id: url.slice(start, end) };
+		var match;
+		match = String(url).match(/(?:youtube(?:-nocookie)?\.com\/(?:watch\?.*v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
+		if (match) {
+			return { provider: 'youtube', id: match[1] };
 		}
-		if (url.indexOf('youtu.be/') != -1) {
-			start = url.indexOf('youtu.be/')+9;
-			end = url.indexOf('?', start);
-			if (end == -1) {
-				end = url.length;
-			}
-			return { provider: 'youtube', id: url.slice(start, end) };
-		}
-		if (url.indexOf('vimeo') != -1) {
-			start = url.indexOf('.com/');
-			if (start == -1) {
-				return false;
-			}
-			start += 5;
-			return { provider: 'vimeo', id: String(parseInt(url.slice(start))) };
+		match = String(url).match(/(?:vimeo\.com\/(?:video\/)?|player\.vimeo\.com\/video\/)([0-9]+)/);
+		if (match) {
+			return { provider: 'vimeo', id: match[1] };
 		}
 		return false;
+	}
+
+	function build_webvideo_iframe(video) {
+		if (video.provider == 'youtube') {
+			return $('<iframe class="youtube-player" src="https://www.youtube-nocookie.com/embed/'+video.id+'?rel=0&amp;playsinline=1" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen="allowfullscreen" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" title="YouTube video player" style="border-width: 0px; height: 100%; position: absolute; width: 100%;"></iframe>');
+		}
+		return $('<iframe src="https://player.vimeo.com/video/'+video.id+'?title=0&amp;byline=0&amp;portrait=0&amp;color=ffffff" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen="allowfullscreen" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" title="Vimeo video player" style="border-width: 0px; height: 100%; position: absolute; width: 100%;"></iframe>');
 	}
 
 	function make_webvideo(anchor) {
@@ -203,14 +189,8 @@ $(document).ready(function() {
 			}
 			$.glue.backend({ method: 'glue.create_object', page: $.glue.page }, function(data) {
 				var elem = $('<div class="webvideo resizable object" style="position: absolute; width: 420px; height: 236px;"></div>');
-				var child;
 				$(elem).attr('id', data.name);
-				if (video.provider == 'youtube') {
-					child = $('<iframe class="youtube-player" src="//www.youtube.com/embed/'+video.id+'?rel=0" style="border-width: 0px; height: 100%; position: absolute; width: 100%;"></iframe>');
-				} else {
-					child = $('<iframe src="//player.vimeo.com/video/'+video.id+'?title=0&amp;byline=0&amp;portrait=0&amp;color=ffffff" style="border-width: 0px; height: 100%; position: absolute; width: 100%;"></iframe>');
-				}
-				$(elem).append(child);
+				$(elem).append(build_webvideo_iframe(video));
 				$(elem).append($('<div class="glue-webvideo-handle glue-ui" title="drag here"></div>'));
 				place_object(elem);
 				$.glue.backend({ method: 'glue.update_object', name: $(elem).attr('id'), 'webvideo-provider': video.provider, 'webvideo-id': video.id });

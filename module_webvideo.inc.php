@@ -13,6 +13,55 @@
 require_once('html.inc.php');
 require_once('modules.inc.php');
 
+function webvideo_youtube_embed_src($obj)
+{
+	$id = preg_replace('/[^A-Za-z0-9_-]/', '', $obj['webvideo-id']);
+	$params = array(
+		'rel' => '0',
+		'playsinline' => '1'
+	);
+	if (isset($obj['webvideo-autoplay']) && $obj['webvideo-autoplay'] == 'autoplay') {
+		$params['autoplay'] = '1';
+	}
+	if (isset($obj['webvideo-loop']) && $obj['webvideo-loop'] == 'loop') {
+		$params['loop'] = '1';
+		$params['playlist'] = $id;
+	}
+	return 'https://www.youtube-nocookie.com/embed/'.$id.'?'.http_build_query($params, '', '&');
+}
+
+function webvideo_vimeo_embed_src($obj)
+{
+	$id = preg_replace('/[^0-9]/', '', $obj['webvideo-id']);
+	$params = array(
+		'title' => '0',
+		'byline' => '0',
+		'portrait' => '0',
+		'color' => 'ffffff'
+	);
+	if (isset($obj['webvideo-autoplay']) && $obj['webvideo-autoplay'] == 'autoplay') {
+		$params['autoplay'] = '1';
+	}
+	if (isset($obj['webvideo-loop']) && $obj['webvideo-loop'] == 'loop') {
+		$params['loop'] = '1';
+	}
+	return 'https://player.vimeo.com/video/'.$id.'?'.http_build_query($params, '', '&');
+}
+
+function webvideo_apply_iframe_permissions(&$i, $provider)
+{
+	if ($provider == 'youtube') {
+		elem_attr($i, 'allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
+		elem_attr($i, 'title', 'YouTube video player');
+	} elseif ($provider == 'vimeo') {
+		elem_attr($i, 'allow', 'autoplay; fullscreen; picture-in-picture');
+		elem_attr($i, 'title', 'Vimeo video player');
+	}
+	elem_attr($i, 'allowfullscreen', 'allowfullscreen');
+	elem_attr($i, 'loading', 'lazy');
+	elem_attr($i, 'referrerpolicy', 'strict-origin-when-cross-origin');
+}
+
 
 function webvideo_alter_render_early($args)
 {
@@ -28,43 +77,12 @@ function webvideo_alter_render_early($args)
 	
 	$i = elem('iframe');
 	if ($obj['webvideo-provider'] == 'youtube') {
-  /*
-		if (empty($_SERVER['HTTPS'])) {
-			$src = 'http://';
-		} else {
-			$src = 'https://';
-		}
-  */
-    // use protocol relative url
-		$src = '//';
-		$src .= 'www.youtube.com/embed/'.$obj['webvideo-id'].'?rel=0';
-		if (isset($obj['webvideo-autoplay']) && $obj['webvideo-autoplay'] == 'autoplay') {
-			$src .= '&autoplay=1';
-		}
-		if (isset($obj['webvideo-loop']) && $obj['webvideo-loop'] == 'loop') {
-			// this is not yet supported by the new youtube embed player
-			$src .= '&loop=1';
-		}
-		elem_attr($i, 'src', $src);
+		elem_attr($i, 'src', webvideo_youtube_embed_src($obj));
 		elem_add_class($i, 'youtube-player');		
+		webvideo_apply_iframe_permissions($i, 'youtube');
 	} elseif ($obj['webvideo-provider'] == 'vimeo') {
-  /*
-    if (empty($_SERVER['HTTPS'])) {
-      $src = 'http://';
-    } else {
-      $src = 'https://';
-    }
-  */
-    // use protocol relative url
- 		$src = '//';
-    $src .= 'player.vimeo.com/video/'.$obj['webvideo-id'].'?title=0&byline=0&portrait=0&color=ffffff';
-		if (isset($obj['webvideo-autoplay']) && $obj['webvideo-autoplay'] == 'autoplay') {
-			$src .= '&autoplay=1';
-		}
-		if (isset($obj['webvideo-loop']) && $obj['webvideo-loop'] == 'loop') {
-			$src .= '&loop=1';
-		}
-		elem_attr($i, 'src', $src);
+		elem_attr($i, 'src', webvideo_vimeo_embed_src($obj));
+		webvideo_apply_iframe_permissions($i, 'vimeo');
 	}
 	// frameborder is not valid html
 	//elem_attr($i, 'frameborder', '0');
