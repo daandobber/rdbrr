@@ -413,7 +413,6 @@ $.glue.contextmenu = function()
 
 	var add_object_style_group = function(obj) {
 		var group = $('<div class="social-object-group social-object-base-controls"></div>');
-		group.append($('<div class="social-object-group-title"></div>').text('Object stijl'));
 		var list = $('<div class="social-object-style-list"></div>');
 		group.append(list);
 		panel.append(group);
@@ -427,7 +426,7 @@ $.glue.contextmenu = function()
 		var opacity = Math.round((parseFloat($(obj).css('opacity')) || 1)*100);
 		var opacity_range = $('<input type="range" min="0" max="100" step="1" title="Transparantie">').val(opacity);
 		var opacity_value = $('<input type="number" min="0" max="100" step="1" title="Transparantie percentage">').val(opacity);
-		control('Dekking', pair(opacity_range, opacity_value));
+		control('Transparantie', pair(opacity_range, opacity_value));
 		var apply_opacity = function(value) {
 			var n = parseInt(value, 10);
 			if (isNaN(n)) {
@@ -486,7 +485,7 @@ $.glue.contextmenu = function()
 
 		var bg = control('Achtergrond', $('<div class="social-object-inline-controls"></div>'));
 		var bg_color = $('<input type="color" title="Achtergrondkleur">').val(rgb_to_hex($(obj).css('background-color')));
-		var bg_clear = $('<button type="button" title="Achtergrond transparant">T</button>');
+		var bg_clear = $('<button type="button" class="social-object-transparent-button" title="Geen achtergrond"></button>');
 		bg.append(bg_color).append(bg_clear);
 		bg_color.bind('change', function() {
 			$(obj).css('background-color', $(this).val());
@@ -540,12 +539,12 @@ $.glue.contextmenu = function()
 		var toggles = $('<div class="social-object-toggle-row"></div>');
 		var bold = $('<button type="button" title="Vet">B</button>');
 		var italic = $('<button type="button" title="Cursief"><em>I</em></button>');
-		var left_align = $('<button type="button" title="Links">L</button>');
-		var center_align = $('<button type="button" title="Midden">C</button>');
-		var right_align = $('<button type="button" title="Rechts">R</button>');
-		var justify_align = $('<button type="button" title="Uitvullen">J</button>');
+		var left_align = $('<button type="button" class="social-align-icon social-align-left" title="Links uitlijnen"><span></span><span></span><span></span></button>');
+		var center_align = $('<button type="button" class="social-align-icon social-align-center" title="Centreren"><span></span><span></span><span></span></button>');
+		var right_align = $('<button type="button" class="social-align-icon social-align-right" title="Rechts uitlijnen"><span></span><span></span><span></span></button>');
+		var justify_align = $('<button type="button" class="social-align-icon social-align-justify" title="Uitvullen"><span></span><span></span><span></span></button>');
 		toggles.append(bold).append(italic).append(left_align).append(center_align).append(right_align).append(justify_align);
-		control('Knoppen', toggles);
+		control('Stijl', toggles);
 		var refresh_toggles = function() {
 			bold.toggleClass('social-object-toggle-active', $(obj).css('font-weight') == 'bold' || parseInt($(obj).css('font-weight'), 10) >= 700);
 			italic.toggleClass('social-object-toggle-active', $(obj).css('font-style') == 'italic');
@@ -803,7 +802,7 @@ $.glue.contextmenu = function()
 				}
 			}
 			panel = build_panel(obj);
-			add_panel_group(obj, 'Object', left);
+			add_panel_group(obj, '', left);
 			add_panel_group(obj, 'Stijl', top);
 			add_object_style_group(obj);
 			add_text_style_group(obj);
