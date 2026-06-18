@@ -272,14 +272,34 @@ $.glue.contextmenu = function()
 		return 'Object';
 	};
 
+	var place_panel = function(obj) {
+		var obj_offset = $(obj).offset();
+		var viewport_left = $(window).scrollLeft();
+		var viewport_top = $(window).scrollTop();
+		var viewport_right = viewport_left+$(window).width();
+		var viewport_bottom = viewport_top+$(window).height();
+		var gap = 8;
+		var width = panel.outerWidth(true);
+		var height = panel.outerHeight(true);
+		var left = obj_offset.left-width-gap;
+		if (left < viewport_left+gap) {
+			left = obj_offset.left+$(obj).outerWidth()+gap;
+		}
+		if (left+width > viewport_right-gap) {
+			left = Math.max(viewport_left+gap, viewport_right-width-gap);
+		}
+		var top = obj_offset.top;
+		if (top+height > viewport_bottom-gap) {
+			top = Math.max(viewport_top+gap, viewport_bottom-height-gap);
+		}
+		panel.css({ left: Math.round(left)+'px', top: Math.round(top)+'px' });
+	};
+
 	var build_panel = function(obj) {
 		panel = $('<div id="social-object-panel" class="social-object-panel glue-ui"></div>');
 		var head = $('<div class="social-object-panel-head"><strong></strong><button type="button" title="Sluiten">x</button></div>');
 		head.find('strong').text(panel_title(obj));
 		panel.append(head);
-		var meta = $('<div class="social-object-meta"></div>');
-		meta.text($(obj).attr('id'));
-		panel.append(meta);
 		$('body').append(panel);
 		panel.bind('mousedown click dblclick', function(e) {
 			e.stopPropagation();
@@ -347,6 +367,107 @@ $.glue.contextmenu = function()
 		if (!list.children().length) {
 			group.remove();
 		}
+	};
+	var rgb_to_hex = function(value) {
+		var match = String(value || '').match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+		if (!match) {
+			if (String(value).charAt(0) == '#') {
+				return value;
+			}
+			return '#ffffff';
+		}
+		var hex = '#';
+		for (var i=1; i <= 3; i++) {
+			var part = parseInt(match[i], 10).toString(16);
+			hex += part.length == 1 ? '0'+part : part;
+		}
+		return hex;
+	};
+
+	var add_social_style_group = function(obj) {
+		var is_wall = $(obj).hasClass('social_wall');
+		var is_microblog = $(obj).hasClass('social_microblog');
+		if (!is_wall && !is_microblog) {
+			return;
+		}
+		var title_selector = is_wall ? '.social-wall-title' : '.social-microblog-title';
+		var title_field = is_wall ? 'wall-title' : 'microblog-title';
+		var group = $('<div class="social-object-group social-object-style-controls"></div>');
+		group.append($('<div class="social-object-group-title"></div>').text('Box stijl'));
+		var list = $('<div class="social-object-style-list"></div>');
+		group.append(list);
+		panel.append(group);
+
+		var save = function(field) {
+			clearTimeout($(obj).data('social-object-style-save'));
+			$(obj).data('social-object-style-save', setTimeout(function() {
+				if (field == 'title') {
+					var payload = { method: 'glue.update_object', name: $(obj).attr('id') };
+					payload[title_field] = $(obj).find(title_selector).first().text();
+					$.glue.backend(payload);
+				}
+				$.glue.object.save(obj);
+			}, 250));
+		};
+		var control = function(label, input) {
+			list.append($('<label></label>').append($('<span></span>').text(label)).append(input));
+			return input;
+		};
+		var title = control('Titel', $('<input type="text">').val($(obj).find(title_selector).first().text()));
+		var bg = control('Achtergrond', $('<input type="color">').val(rgb_to_hex($(obj).css('background-color'))));
+		var color = control('Tekst', $('<input type="color">').val(rgb_to_hex($(obj).css('color'))));
+		var fonts = [
+			['DejaVuSans', 'DejaVu Sans'],
+			['DejaVuSerif', 'DejaVu Serif'],
+			['DejaVuSansMono', 'DejaVu Mono'],
+			['LatinModern', 'Latin Modern'],
+			['Verdana, Geneva, Tahoma, sans-serif', 'Verdana'],
+			['Arial, Helvetica, sans-serif', 'Arial'],
+			['Georgia, serif', 'Georgia'],
+			['"Courier New", Courier, monospace', 'Courier New']
+		];
+		var font = $('<select></select>');
+		var current_font = $(obj).css('font-family') || '';
+		for (var i=0; i < fonts.length; i++) {
+			var opt = $('<option></option>').val(fonts[i][0]).text(fonts[i][1]);
+			if (current_font.indexOf(fonts[i][1]) != -1 || current_font.indexOf(fonts[i][0]) != -1) {
+				opt.attr('selected', 'selected');
+			}
+			font.append(opt);
+		}
+		control('Font', font);
+		var size = control('Grootte', $('<input type="text">').val($(obj).css('font-size')));
+		var border = control('Rand', $('<input type="color">').val(rgb_to_hex($(obj).css('border-top-color'))));
+		var radius = control('Hoek', $('<input type="text">').val($(obj).css('border-top-left-radius')));
+
+		title.bind('keyup change', function() {
+			$(obj).find(title_selector).first().text($(this).val());
+			save('title');
+		});
+		bg.bind('change', function() {
+			$(obj).css('background-color', $(this).val());
+			save();
+		});
+		color.bind('change', function() {
+			$(obj).css('color', $(this).val());
+			save();
+		});
+		font.bind('change', function() {
+			$(obj).css('font-family', $(this).val());
+			save();
+		});
+		size.bind('keyup change', function() {
+			$(obj).css('font-size', $(this).val());
+			save();
+		});
+		border.bind('change', function() {
+			$(obj).css('border-color', $(this).val());
+			save();
+		});
+		radius.bind('keyup change', function() {
+			$(obj).css('border-radius', $(this).val());
+			save();
+		});
 	};
 
 	return {
@@ -471,10 +592,12 @@ $.glue.contextmenu = function()
 			}
 			panel = build_panel(obj);
 			add_panel_group(obj, 'Object', left);
-			add_panel_group(obj, 'Element', top);
-			if (!panel.find('.social-object-action-row').length) {
+			add_panel_group(obj, 'Stijl', top);
+			add_social_style_group(obj);
+			if (!panel.find('.social-object-action-row').length && !panel.find('.social-object-style-controls').length) {
 				panel.append($('<div class="social-object-empty">Geen acties beschikbaar</div>'));
 			}
+			place_panel(obj);
 			owner = obj;
 			// reset prev_owner as well
 			prev_owner = false;
