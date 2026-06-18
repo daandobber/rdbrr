@@ -199,7 +199,7 @@ $(document).ready(function() {
 	$(elem).bind('click', function(e) {
 		var obj = $(this).data('owner');
 		// initiate download
-		window.location = $.glue.base_url+'?'+$(obj).attr('id')+'&download=1';
+		window.location = $.glue.base_url+$.glue.q+$(obj).attr('id')+$.glue.query_separator+'download=1';
 	});
 	$.glue.contextmenu.register('video', 'video-download', elem);
 });

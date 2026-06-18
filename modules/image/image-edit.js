@@ -102,7 +102,7 @@ $.glue.image = function() {
 						$(temp_elem).css('top', ($(obj).position().top+($(obj).outerHeight()-height)/2)+'px');
 					}
 					// set new url (w & h are only here to prevent caching)
-					$(temp_elem).css('background-image', 'url('+$.glue.base_url+'?'+$(obj).attr('id')+'&w='+width+'&h='+height+')');
+					$(temp_elem).css('background-image', 'url('+$.glue.base_url+$.glue.q+$(obj).attr('id')+$.glue.query_separator+'w='+width+'&h='+height+')');
 					$(obj).before(temp_elem);
 					// destroy element on move or resize
 					$(obj).one('glue-movestart', function() {
@@ -121,7 +121,7 @@ $.glue.image = function() {
 					preload_timer = setTimeout(function() {
 						// DEBUG
 						//console.log('outer timeout');
-						$(obj).css('background-image', 'url('+$.glue.base_url+'?'+$(obj).attr('id')+'&w='+width+'&h='+height+')');
+						$(obj).css('background-image', 'url('+$.glue.base_url+$.glue.q+$(obj).attr('id')+$.glue.query_separator+'w='+width+'&h='+height+')');
 						var remove = preload_obj;
 						setTimeout(function() {
 							$(remove).remove();
@@ -264,7 +264,7 @@ $(document).ready(function() {
 	$(elem).bind('click', function(e) {
 		var obj = $(this).data('owner');
 		// initiate download
-		window.location = $.glue.base_url+'?'+$(obj).attr('id')+'&download=1';
+		window.location = $.glue.base_url+$.glue.q+$(obj).attr('id')+$.glue.query_separator+'download=1';
 	});
 	$.glue.contextmenu.register('image', 'image-download', elem);
 });

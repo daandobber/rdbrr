@@ -11,7 +11,7 @@ $(document).ready(function() {
 	$('#revisions_browser_revert_btn').bind('click', function(e) {
 		$.glue.backend({ method: 'glue.revert', page: $.glue.page }, function(data) {
 			var a = $.glue.page.split('.');
-			window.location = $.glue.base_url+'?'+a[0]+'/edit';		
+			window.location = $.glue.base_url+$.glue.q+a[0]+'/edit';
 		});
 		return false;
 	});

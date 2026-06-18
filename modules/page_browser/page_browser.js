@@ -15,7 +15,7 @@ $(document).ready(function() {
 			$(span).remove();
 		}
 		var html = '<span class="page_browser_actions">';
-		html += '<a href="'+$.glue.base_url+'?'+$(this).attr('id')+'/edit">edit</a> | ';
+		html += '<a href="'+$.glue.base_url+$.glue.q+$(this).attr('id')+'/edit">edit</a> | ';
 		html += '<a href="#" class="page_browser_copy">copy</a> | ';
 		html += '<a href="#" class="page_browser_rename">rename</a> | ';
 		html += '<a href="#" class="page_browser_delete">delete</a>';
@@ -42,7 +42,7 @@ $(document).ready(function() {
 		if (pn != null && pn != old) {
 			$.glue.backend({ method: 'glue.rename_page', 'old': old, 'new': pn }, function(data) {
 				$(entry).attr('id', pn);
-				$(entry).children('.page_browser_pagename').html('<a href="'+$.glue.base_url+'?'+pn+'">'+pn+'</a>');
+				$(entry).children('.page_browser_pagename').html('<a href="'+$.glue.base_url+$.glue.q+pn+'">'+pn+'</a>');
 			});
 		}
 		return false;
@@ -57,7 +57,7 @@ $(document).ready(function() {
 				copy = $(entry).clone();
 				$(copy).attr('id', pn);
 				$(copy).find('span.page_browser_pagename').siblings().remove();
-				$(copy).children('.page_browser_pagename').html('<a href="'+$.glue.base_url+'?'+pn+'">'+pn+'</a>');
+				$(copy).children('.page_browser_pagename').html('<a href="'+$.glue.base_url+$.glue.q+pn+'">'+pn+'</a>');
 				$(entry).after(copy);
 			});
 		}

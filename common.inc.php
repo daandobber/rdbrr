@@ -111,6 +111,8 @@ function default_html($add_glue)
 			html_add_js(base_url().'js/glue.js', 3);
 		}
 		html_add_js_var('$.glue.base_url', base_url());
+		html_add_js_var('$.glue.q', (SHORT_URLS ? '' : '?'));
+		html_add_js_var('$.glue.query_separator', (SHORT_URLS ? '?' : '&'));
 		html_add_js_var('$.glue.conf.show_frontend_errors', SHOW_FRONTEND_ERRORS);
 		html_add_js_var('$.glue.version', glue_version());
 	}

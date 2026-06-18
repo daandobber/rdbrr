@@ -58,10 +58,11 @@ function controller_revisions($args)
 	$bdy = &body();
 	elem_attr($bdy, 'id', 'revisions');
 	render_page(array('page'=>$page, 'edit'=>false));
+	$q = (SHORT_URLS ? '' : '?');
 	body_append('<div id="revisions_browser_ctrl">');
 	body_append('<div id="revisions_browser_prev">');
 	if ($cur_rev+1 < count($revs)) {
-		body_append('<a href="'.base_url().'?'.htmlspecialchars(urlencode($revs[$cur_rev+1]['page']), ENT_COMPAT, 'UTF-8').'/revisions">prev</a>');
+		body_append('<a href="'.base_url().$q.htmlspecialchars(urlencode($revs[$cur_rev+1]['page']), ENT_COMPAT, 'UTF-8').'/revisions">prev</a>');
 	}
 	body_append('</div><div id="revisions_browser_cur">');
 	if (substr($revs[$cur_rev]['revision'], 0, 5) == 'auto-') {
@@ -71,13 +72,13 @@ function controller_revisions($args)
 	}
 	body_append('<br>');
 	if ($a[1] == 'head') {
-		body_append('<a href="'.base_url().'?'.htmlspecialchars(urlencode($page), ENT_COMPAT, 'UTF-8').'/edit">back to editing mode</a>');
+		body_append('<a href="'.base_url().$q.htmlspecialchars(urlencode($page), ENT_COMPAT, 'UTF-8').'/edit">back to editing mode</a>');
 	} else {
 		body_append('<a id="revisions_browser_revert_btn" href="#">revert</a>');
 	}
 	body_append('</div><div id="revisions_browser_next">');
 	if (0 < $cur_rev) {
-		body_append('<a href="'.base_url().'?'.htmlspecialchars(urlencode($revs[$cur_rev-1]['page']), ENT_COMPAT, 'UTF-8').'/revisions">next</a>');
+		body_append('<a href="'.base_url().$q.htmlspecialchars(urlencode($revs[$cur_rev-1]['page']), ENT_COMPAT, 'UTF-8').'/revisions">next</a>');
 	}
 	body_append('</div>');
 	body_append('</div>');

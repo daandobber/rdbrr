@@ -43,7 +43,7 @@ $(document).ready(function() {
 				$(that).attr('value', 'save');
 			}, 2000);
 			if ($.glue.page && $('#user_code_page_link').length == 0) {
-				$('body').append($('<a id="user_code_page_link" href="'+$.glue.base_url+'?'+$.glue.page+'/edit">go to page</a>'));
+				$('body').append($('<a id="user_code_page_link" href="'+$.glue.base_url+$.glue.q+$.glue.page+'/edit">go to page</a>'));
 			}
 		});
 	});

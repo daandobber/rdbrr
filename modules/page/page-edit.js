@@ -51,11 +51,11 @@ $(document).ready(function() {
 						// change startpage accordingly
 						$.glue.backend({ method: 'glue.set_startpage', page: new_pn+'.head' }, function(data) {
 							// redirect to new url
-							window.location = $.glue.base_url+'?'+new_pn+'/edit';
+							window.location = $.glue.base_url+$.glue.q+new_pn+'/edit';
 						});
 					} else {
 						// redirect to new url
-						window.location = $.glue.base_url+'?'+new_pn+'/edit';
+						window.location = $.glue.base_url+$.glue.q+new_pn+'/edit';
 					}
 				});
 			});
@@ -110,7 +110,7 @@ $(document).ready(function() {
 		}
 		$.glue.backend({ method: 'glue.create_page', page: pn+'.head' }, function(data) {
 			// redirect to newly created page
-			window.location = $.glue.base_url+'?'+pn+'/edit';
+			window.location = $.glue.base_url+$.glue.q+pn+'/edit';
 		});
 	});
 	$.glue.menu.register('page', elem);
@@ -133,7 +133,7 @@ $(document).ready(function() {
 				}
 				// TODO (later): check if all revisions were indeed deleted
 				// redirect to "pages" controller
-				window.location = $.glue.base_url+'?pages';
+				window.location = $.glue.base_url+$.glue.q+'pages';
 			});
 		}
 		$.glue.menu.hide();
@@ -159,7 +159,7 @@ $(document).ready(function() {
 				$.glue.error('There was a problem uploading the file ('+data['#data']+')');
 			} else {
 				// the timestamp here is to trick any caching going on
-				$('html').css('background-image', 'url('+$.glue.base_url+'?'+$.glue.page+'.page&'+(new Date().getTime())+')');
+				$('html').css('background-image', 'url('+$.glue.base_url+$.glue.q+$.glue.page+'.page'+$.glue.query_separator+(new Date().getTime())+')');
 			}
 			$.glue.menu.hide();
 		},

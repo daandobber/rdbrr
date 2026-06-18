@@ -18,6 +18,18 @@ require_once('util.inc.php');
 // module_image.inc.php has more information on what's going on inside modules 
 // (they can be easier than that one though)
 
+function object_shape_clip_path($shape)
+{
+	if ($shape == 'diamond') {
+		return 'polygon(50% 0, 100% 50%, 50% 100%, 0 50%)';
+	} elseif ($shape == 'hexagon') {
+		return 'polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%)';
+	} elseif ($shape == 'octagon') {
+		return 'polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%)';
+	}
+	return '';
+}
+
 
 function object_alter_render_early($args)
 {
@@ -45,6 +57,38 @@ function object_alter_render_early($args)
 	}
 	if (!empty($obj['object-zindex'])) {
 		elem_css($elem, 'z-index', $obj['object-zindex']);
+	}
+	if (!empty($obj['object-box-sizing'])) {
+		elem_css($elem, 'box-sizing', $obj['object-box-sizing']);
+	}
+	if (!empty($obj['object-border-color'])) {
+		elem_css($elem, 'border-color', $obj['object-border-color']);
+	}
+	if (!empty($obj['object-border-style'])) {
+		elem_css($elem, 'border-style', $obj['object-border-style']);
+	}
+	if (!empty($obj['object-border-width'])) {
+		elem_css($elem, 'border-width', $obj['object-border-width']);
+	}
+	if (!empty($obj['object-border-radius'])) {
+		elem_css($elem, 'border-radius', $obj['object-border-radius']);
+	}
+	if (!empty($obj['object-shape'])) {
+		elem_attr($elem, 'data-object-shape', $obj['object-shape']);
+		if ($obj['object-shape'] == 'pill') {
+			elem_css($elem, 'border-radius', '9999px');
+		} elseif ($obj['object-shape'] == 'ellipse') {
+			elem_css($elem, 'border-radius', '50%');
+		} else {
+			$clip_path = object_shape_clip_path($obj['object-shape']);
+			if ($clip_path != '') {
+				elem_css($elem, 'clip-path', $clip_path);
+				elem_css($elem, '-webkit-clip-path', $clip_path);
+			}
+		}
+	}
+	if (!empty($obj['object-shape']) || !empty($obj['object-border-radius'])) {
+		elem_css($elem, 'overflow', 'hidden');
 	}
 	
 	return true;
@@ -130,6 +174,37 @@ function object_alter_save($args)
 		$obj['object-zindex'] = elem_css($elem, 'z-index');
 	} else {
 		unset($obj['object-zindex']);
+	}
+	if (elem_css($elem, 'box-sizing') !== NULL) {
+		$obj['object-box-sizing'] = elem_css($elem, 'box-sizing');
+	} else {
+		unset($obj['object-box-sizing']);
+	}
+	if (elem_css($elem, 'border-color') !== NULL) {
+		$obj['object-border-color'] = elem_css($elem, 'border-color');
+	} else {
+		unset($obj['object-border-color']);
+	}
+	if (elem_css($elem, 'border-style') !== NULL) {
+		$obj['object-border-style'] = elem_css($elem, 'border-style');
+	} else {
+		unset($obj['object-border-style']);
+	}
+	if (elem_css($elem, 'border-width') !== NULL) {
+		$obj['object-border-width'] = elem_css($elem, 'border-width');
+	} else {
+		unset($obj['object-border-width']);
+	}
+	if (elem_css($elem, 'border-radius') !== NULL) {
+		$obj['object-border-radius'] = elem_css($elem, 'border-radius');
+	} else {
+		unset($obj['object-border-radius']);
+	}
+	$shape = elem_attr($elem, 'data-object-shape');
+	if (in_array($shape, array('pill', 'ellipse', 'diamond', 'hexagon', 'octagon'))) {
+		$obj['object-shape'] = $shape;
+	} else {
+		unset($obj['object-shape']);
 	}
 	
 	return true;

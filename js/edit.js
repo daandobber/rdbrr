@@ -414,6 +414,48 @@ $.glue.contextmenu = function()
 		return isNaN(n) ? fallback : n;
 	};
 
+	var shape_clip_path = function(shape) {
+		if (shape == 'diamond') {
+			return 'polygon(50% 0, 100% 50%, 50% 100%, 0 50%)';
+		} else if (shape == 'hexagon') {
+			return 'polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%)';
+		} else if (shape == 'octagon') {
+			return 'polygon(30% 0, 70% 0, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0 70%, 0 30%)';
+		}
+		return '';
+	};
+
+	var apply_object_shape = function(obj, shape) {
+		shape = shape || 'rectangle';
+		$(obj).css('box-sizing', 'border-box');
+		$(obj).css('clip-path', '');
+		$(obj).css('-webkit-clip-path', '');
+		if (shape == 'rectangle') {
+			$(obj).removeAttr('data-object-shape');
+		} else {
+			$(obj).attr('data-object-shape', shape);
+		}
+		if (shape == 'pill') {
+			$(obj).css('border-radius', '9999px');
+			$(obj).css('overflow', 'hidden');
+		} else if (shape == 'ellipse') {
+			$(obj).css('border-radius', '50%');
+			$(obj).css('overflow', 'hidden');
+		} else {
+			var clip = shape_clip_path(shape);
+			if (clip) {
+				$(obj).css('clip-path', clip);
+				$(obj).css('-webkit-clip-path', clip);
+				$(obj).css('overflow', 'hidden');
+			} else if (px_number($(obj).css('border-top-left-radius'), 0) > 0) {
+				$(obj).css('overflow', 'hidden');
+			} else {
+				$(obj).css('overflow', '');
+			}
+		}
+		$(obj).children('img, iframe, video, .glue-iframe-shield').css('border-radius', 'inherit');
+	};
+
 	var encode_custom_css = function(value) {
 		return window.btoa(unescape(encodeURIComponent(value || '')));
 	};
@@ -565,6 +607,15 @@ $.glue.contextmenu = function()
 			.append('<option value="double">Dubbel</option>');
 		border_style.val($(obj).css('border-top-style') || 'none');
 		control('Soort', border_style);
+		var shape_select = $('<select title="Vorm"></select>')
+			.append('<option value="rectangle">Rechthoek</option>')
+			.append('<option value="pill">Pil</option>')
+			.append('<option value="ellipse">Ovaal</option>')
+			.append('<option value="diamond">Diamant</option>')
+			.append('<option value="hexagon">Zeshoek</option>')
+			.append('<option value="octagon">Achthoek</option>');
+		shape_select.val($(obj).attr('data-object-shape') || 'rectangle');
+		control('Vorm', shape_select);
 		var radius = Math.round(px_number($(obj).css('border-top-left-radius'), 0));
 		var radius_range = $('<input type="range" min="0" max="120" step="1" title="Hoekradius">').val(radius);
 		var radius_value = $('<input type="number" min="0" max="300" step="1" title="Hoekradius pixels">').val(radius);
@@ -595,9 +646,25 @@ $.glue.contextmenu = function()
 			}
 			save();
 		});
+		shape_select.bind('change', function() {
+			apply_object_shape(obj, $(this).val());
+			if ($(this).val() == 'pill') {
+				radius_range.val(120);
+				radius_value.val(300);
+			} else if ($(this).val() == 'ellipse') {
+				radius_range.val(50);
+				radius_value.val(50);
+			}
+			save();
+		});
 		sync_number(radius_range, radius_value, 0, 300, function(n) {
+			shape_select.val('rectangle');
+			$(obj).removeAttr('data-object-shape');
+			$(obj).css('clip-path', '');
+			$(obj).css('-webkit-clip-path', '');
 			$(obj).css('border-radius', n+'px');
-			$(obj).children('img, iframe, video').css('border-radius', 'inherit');
+			$(obj).css('overflow', n > 0 ? 'hidden' : '');
+			$(obj).children('img, iframe, video, .glue-iframe-shield').css('border-radius', 'inherit');
 		});
 		css_button.bind('click', function() { open_object_css_panel(obj); return false; });
 	};
@@ -2470,7 +2537,7 @@ $(document).ready(function() {
 		} else if (e.ctrlKey && e.which == 90) {
 			// ctrl+z: show revisions browser to suggest using revisions in place of undo
 			$.glue.confirm('Zoek je undo? rdbrr bewaart recente bewerkingen als revisies. Wil je de revisies van deze pagina bekijken?', 'Revisies openen', 'Blijven', function() {
-				window.location = $.glue.base_url+'?'+$.glue.page+'/revisions';
+				window.location = $.glue.base_url+$.glue.q+$.glue.page+'/revisions';
 			});
 			return false;
 		}
