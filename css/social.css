@@ -126,6 +126,33 @@ body#social form.social-admin-action input[type='submit'] {
 	width: auto;
 }
 
+body#social .social-admin-update {
+	border-bottom: solid 1px #ddd;
+	margin-bottom: 22px;
+	padding-bottom: 18px;
+}
+
+body#social .social-admin-update h2 {
+	font-size: 16pt;
+	margin: 0 0 10px 0;
+}
+
+body#social .social-admin-update input[type='submit'] {
+	width: auto;
+}
+
+body#social .social-admin-update-log {
+	background: #1f1f1f;
+	color: #f6f0dd;
+	font-family: monospace;
+	font-size: 10pt;
+	line-height: 1.35;
+	max-height: 320px;
+	overflow: auto;
+	padding: 10px;
+	white-space: pre-wrap;
+}
+
 .social-account-preview {
 	align-items: center;
 	display: flex;

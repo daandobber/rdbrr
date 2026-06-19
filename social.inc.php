@@ -1580,6 +1580,159 @@ function social_manage_user($username, $action, &$error)
 }
 
 
+function social_site_update_enabled()
+{
+	return defined('SOCIAL_SITE_UPDATE_ENABLED') && SOCIAL_SITE_UPDATE_ENABLED;
+}
+
+
+function social_site_update_path_is_absolute($path)
+{
+	if ($path == '') {
+		return false;
+	}
+	if ($path[0] == '/' || $path[0] == '\\') {
+		return true;
+	}
+	return strlen($path) > 2 && ctype_alpha($path[0]) && $path[1] == ':' && ($path[2] == '/' || $path[2] == '\\');
+}
+
+
+function social_site_update_content_path($name)
+{
+	$base = CONTENT_DIR;
+	if (!social_site_update_path_is_absolute($base)) {
+		$base = dirname(__FILE__).'/'.$base;
+	}
+	return rtrim($base, '/\\').'/'.$name;
+}
+
+
+function social_site_update_log_file()
+{
+	return social_site_update_content_path('site-update.log');
+}
+
+
+function social_site_update_lock_file()
+{
+	return social_site_update_content_path('site-update.lock');
+}
+
+
+function social_site_update_log_tail()
+{
+	$file = social_site_update_log_file();
+	if (!is_file($file)) {
+		return '';
+	}
+	$size = filesize($file);
+	if ($size === false) {
+		return '';
+	}
+	$limit = 12000;
+	$offset = max(0, $size-$limit);
+	$fh = @fopen($file, 'rb');
+	if (!$fh) {
+		return '';
+	}
+	if ($offset > 0) {
+		fseek($fh, $offset);
+	}
+	$text = stream_get_contents($fh);
+	fclose($fh);
+	return $offset > 0 ? "... laatste regels ...\n".$text : $text;
+}
+
+
+function social_start_site_update(&$notice, &$error)
+{
+	if (!social_site_update_enabled()) {
+		$error = 'Site-update is uitgeschakeld.';
+		return false;
+	}
+	if (!function_exists('exec')) {
+		$error = 'De server staat exec() niet toe.';
+		return false;
+	}
+	$repo = realpath(dirname(__FILE__));
+	if ($repo === false) {
+		$error = 'Kon de repo-map niet vinden.';
+		return false;
+	}
+	$compose_file = defined('SOCIAL_SITE_UPDATE_COMPOSE_FILE') ? SOCIAL_SITE_UPDATE_COMPOSE_FILE : 'docker/docker-compose.yml';
+	$compose_path = social_site_update_path_is_absolute($compose_file) ? $compose_file : $repo.'/'.$compose_file;
+	$compose = realpath($compose_path);
+	if ($compose === false || substr($compose, 0, strlen($repo)) != $repo) {
+		$error = 'Kon docker compose bestand niet vinden.';
+		return false;
+	}
+	$log = social_site_update_log_file();
+	$lock = social_site_update_lock_file();
+	$content_dir = dirname($log);
+	if (!is_dir($content_dir) || !is_writable($content_dir)) {
+		$error = 'Content-map is niet schrijfbaar, kan update-log niet maken.';
+		return false;
+	}
+	if (is_file($lock) && filemtime($lock) !== false && filemtime($lock) > time()-1800) {
+		$error = 'Er loopt al een update. Kijk in de log hieronder.';
+		return false;
+	}
+	if (@file_put_contents($lock, gmdate('c')."\n", LOCK_EX) === false) {
+		$error = 'Kon update-lock niet maken.';
+		return false;
+	}
+	$lock_arg = escapeshellarg($lock);
+	$body = 'set -u; run_status=0; '.
+		'finish() { status=$?; echo "== rdbrr update klaar met status $status $(date -u +%Y-%m-%dT%H:%M:%SZ) =="; rm -f '.$lock_arg.'; exit $status; }; '.
+		'trap finish EXIT; '.
+		'echo "== rdbrr update start $(date -u +%Y-%m-%dT%H:%M:%SZ) =="; '.
+		'cd '.escapeshellarg($repo).' || exit 1; '.
+		'echo "$ docker compose -f '.escapeshellarg($compose).' down"; '.
+		'docker compose -f '.escapeshellarg($compose).' down || run_status=$?; '.
+		'echo "$ git pull --ff-only"; '.
+		'git pull --ff-only || run_status=$?; '.
+		'echo "$ docker compose -f '.escapeshellarg($compose).' up -d --build"; '.
+		'docker compose -f '.escapeshellarg($compose).' up -d --build || run_status=$?; '.
+		'exit $run_status';
+	$cmd = 'sh -c '.escapeshellarg($body).' > '.escapeshellarg($log).' 2>&1 & echo $!';
+	$output = array();
+	$status = 0;
+	exec($cmd, $output, $status);
+	if ($status !== 0) {
+		@unlink($lock);
+		$error = 'Kon updateproces niet starten.';
+		return false;
+	}
+	$pid = count($output) ? trim($output[0]) : '';
+	$notice = $pid != '' ? 'Update gestart als proces '.$pid.'.' : 'Update gestart.';
+	return true;
+}
+
+
+function social_site_update_panel($notice = '')
+{
+	if (!social_site_update_enabled()) {
+		return '';
+	}
+	$ret = tab(5).'<div class="social-admin-update">'.nl();
+	$ret .= tab(6).'<h2>Site update</h2>'.nl();
+	if ($notice != '') {
+		$ret .= tab(6).'<p class="social-notice">'.htmlspecialchars($notice, ENT_NOQUOTES, 'UTF-8').'</p>'.nl();
+	}
+	$ret .= tab(6).'<form method="post" action="'.htmlspecialchars(social_url('admin'), ENT_COMPAT, 'UTF-8').'" onsubmit="return confirm(\'Site updaten en Docker opnieuw starten?\');">'.nl();
+	$ret .= tab(7).'<input type="hidden" name="action" value="site_update">'.nl();
+	$ret .= tab(7).'<input type="submit" value="Update site">'.nl();
+	$ret .= tab(6).'</form>'.nl();
+	$log = social_site_update_log_tail();
+	if ($log != '') {
+		$ret .= tab(6).'<pre class="social-admin-update-log">'.htmlspecialchars($log, ENT_NOQUOTES, 'UTF-8').'</pre>'.nl();
+	}
+	$ret .= tab(5).'</div>'.nl();
+	return $ret;
+}
+
+
 function social_controller_account($args)
 {
 	$current = social_current_username();
@@ -1675,14 +1828,20 @@ function social_controller_admin($args)
 		hotglue_error(403);
 	}
 	$error = '';
+	$notice = '';
 	if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 		$username = isset($_POST['username']) ? $_POST['username'] : '';
 		$action = isset($_POST['action']) ? $_POST['action'] : '';
-		social_manage_user($username, $action, $error);
+		if ($action == 'site_update') {
+			social_start_site_update($notice, $error);
+		} else {
+			social_manage_user($username, $action, $error);
+		}
 	}
 	$data = social_read_users();
 	ksort($data['users']);
-	$body = tab(5).'<table class="social-admin-users">'.nl();
+	$body = social_site_update_panel($notice);
+	$body .= tab(5).'<table class="social-admin-users">'.nl();
 	$body .= tab(6).'<tr><th>Gebruiker</th><th>Rol</th><th>Status</th><th>Acties</th></tr>'.nl();
 	foreach ($data['users'] as $username=>$user) {
 		$role = social_user_role($user, $data);
