@@ -103,9 +103,8 @@
 
 .glue-selected {
 	/* class for selected objects */
-	border-color: red;
-	border-style: dashed;
-	border-width: 1px;
+	outline: 1px dashed red;
+	outline-offset: 0;
 }
 
 .glue-ui {

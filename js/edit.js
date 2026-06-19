@@ -1657,21 +1657,11 @@ $.glue.object = function()
 			}
 		});
 		$.glue.object.register_alter_pre_save('glue-selected', function(obj, orig) {
-			var border = $(orig).outerHeight()-$(orig).innerHeight();
-			var p = $(orig).position();
 			// remove class
 			$(obj).removeClass('glue-selected');
-			// and remove border offset
-			$(obj).css('left', (p.left+border/2)+'px');
-			$(obj).css('top', (p.top+border/2)+'px');
 			if ($.glue.mobile_layout) {
-				$.glue.mobile_layout.prepare_save_clone(obj, orig, {
-					left: (p.left+border/2)+'px',
-					top: (p.top+border/2)+'px'
-				});
+				$.glue.mobile_layout.prepare_save_clone(obj, orig);
 			}
-			//$(obj).css('width', ($(orig).width()+border)+'px');
-			//$(obj).css('height', ($(orig).height()+border)+'px');
 		});
 	});
 	
@@ -2083,14 +2073,8 @@ $.glue.sel = function()
 		// obj .. element
 		deselect: function(obj) {
 			if ($(obj).hasClass('glue-selected')) {
-				var border = $(obj).outerHeight()-$(obj).innerHeight();
 				$(obj).removeClass('glue-selected');
 				$(obj).trigger('glue-deselect');
-				var p = $(obj).position();
-				$(obj).css('left', (p.left+border/2)+'px');
-				$(obj).css('top', (p.top+border/2)+'px');
-				//$(obj).css('width', ($(obj).width()+border)+'px');
-				//$(obj).css('height', ($(obj).height()+border)+'px');
 				// DEBUG
 				//console.log('deselected '+$(obj).attr('id'));
 			}
@@ -2108,17 +2092,6 @@ $.glue.sel = function()
 			if (!$(obj).hasClass('glue-selected')) {
 				$(obj).addClass('glue-selected');
 				$(obj).trigger('glue-select');
-				// TODO (later): the following code works for dashed borders but 
-				// not for solid ones - read out the border-style on the fly and 
-				// act accordingly (there seem to be a problem with getting the 
-				// information through jQuery 1.4.3 however)
-				// also needs changes above and in register_alter_pre_save
-				var p = $(obj).position();
-				var border = $(obj).outerHeight()-$(obj).innerHeight();
-				$(obj).css('left', (p.left-border/2)+'px');
-				$(obj).css('top', (p.top-border/2)+'px');
-				//$(obj).css('width', ($(obj).width()-border)+'px');
-				//$(obj).css('height', ($(obj).height()-border)+'px');
 				// DEBUG
 				//console.log('selected '+$(obj).attr('id'));
 			}

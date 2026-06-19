@@ -265,16 +265,22 @@ $(document).ready(function() {
 
 	function snap_object_to_grid(obj) {
 		if (($.glue.grid.mode() & 6) == 0 || $(obj).hasClass('locked')) {
-			return;
+			return false;
 		}
 		var pos = $(obj).position();
 		var gridX = $.glue.grid.x();
 		var gridY = $.glue.grid.y();
 		if (gridX <= 0 || gridY <= 0) {
-			return;
+			return false;
 		}
-		$(obj).css('left', (Math.round(pos.left/gridX)*gridX)+'px');
-		$(obj).css('top', (Math.round(pos.top/gridY)*gridY)+'px');
+		var left = Math.round(pos.left/gridX)*gridX;
+		var top = Math.round(pos.top/gridY)*gridY;
+		if (left == pos.left && top == pos.top) {
+			return false;
+		}
+		$(obj).css('left', left+'px');
+		$(obj).css('top', top+'px');
+		return true;
 	}
 
 	function page_object_name() {
@@ -1127,9 +1133,10 @@ $(document).ready(function() {
 	show_layers_panel();
 
 	$('.object').live('glue-movestop', function() {
-		snap_object_to_grid(this);
-		$.glue.object.save(this);
-		$.glue.canvas.update(this);
+		if (snap_object_to_grid(this)) {
+			$.glue.object.save(this);
+			$.glue.canvas.update(this);
+		}
 		refresh_layers_panel();
 	});
 	$('.object').live('glue-select glue-deselect glue-register glue-unregister', function() {
