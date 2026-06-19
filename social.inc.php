@@ -179,7 +179,28 @@ function social_user_status($user)
 	if (isset($user['status']) && $user['status'] == 'disabled') {
 		return 'disabled';
 	}
+	if (isset($user['status']) && $user['status'] == 'pending') {
+		return 'pending';
+	}
 	return 'active';
+}
+
+
+function social_require_account_approval()
+{
+	return defined('SOCIAL_REQUIRE_ACCOUNT_APPROVAL') && SOCIAL_REQUIRE_ACCOUNT_APPROVAL;
+}
+
+
+function social_new_user_status($username, $role, $data)
+{
+	if ($role == 'admin' || !social_require_account_approval()) {
+		return 'active';
+	}
+	if (!social_data_has_admin($data) && count($data['users']) == 0) {
+		return 'active';
+	}
+	return 'pending';
 }
 
 
@@ -267,11 +288,14 @@ function social_route_profile_page($route, $slug = 'home')
 	if ($slug != 'home' && !social_valid_profile_slug($slug)) {
 		return false;
 	}
+	$data = social_read_users();
+	if (isset($data['users'][$username]) && social_user_status($data['users'][$username]) != 'active' && !social_is_admin()) {
+		return false;
+	}
 	$page = social_profile_page($username, $slug);
 	if (page_exists($page.'.head')) {
 		return $page;
 	}
-	$data = social_read_users();
 	if ($slug == 'home' && isset($data['users'][$username])) {
 		return $page;
 	}
@@ -385,7 +409,7 @@ function social_current_user()
 		unset($_SESSION['social_user']);
 		return false;
 	}
-	if (social_user_status($data['users'][$username]) == 'disabled') {
+	if (social_user_status($data['users'][$username]) != 'active') {
 		unset($_SESSION['social_user']);
 		return false;
 	}
@@ -914,7 +938,7 @@ function social_following($username = false)
 	$ret = array();
 	foreach ($data['users'][$username]['following'] as $followed) {
 		$followed = social_normalize_username($followed);
-		if ($followed != $username && isset($data['users'][$followed])) {
+		if ($followed != $username && isset($data['users'][$followed]) && social_user_status($data['users'][$followed]) == 'active') {
 			$ret[] = $followed;
 		}
 	}
@@ -953,13 +977,17 @@ function social_set_following($target, $follow, &$error)
 		$error = 'Gebruiker bestaat niet.';
 		return false;
 	}
+	if (social_user_status($data['users'][$target]) != 'active') {
+		$error = 'Deze gebruiker is nog niet actief.';
+		return false;
+	}
 	if (!isset($data['users'][$current]['following']) || !is_array($data['users'][$current]['following'])) {
 		$data['users'][$current]['following'] = array();
 	}
 	$following = array();
 	foreach ($data['users'][$current]['following'] as $username) {
 		$username = social_normalize_username($username);
-		if ($username != $current && isset($data['users'][$username])) {
+		if ($username != $current && isset($data['users'][$username]) && social_user_status($data['users'][$username]) == 'active') {
 			$following[] = $username;
 		}
 	}
@@ -1056,6 +1084,7 @@ function social_register_user($username, $password, &$error)
 		return false;
 	}
 	$role = count($data['users']) == 0 || in_array($username, social_admin_usernames()) ? 'admin' : 'user';
+	$status = social_new_user_status($username, $role, $data);
 	$page = social_profile_page($username);
 	if (page_exists($page.'.head')) {
 		$error = 'De profielpagina voor deze naam bestaat al.';
@@ -1067,7 +1096,7 @@ function social_register_user($username, $password, &$error)
 		'avatar_url'=>'',
 		'password_hash'=>social_hash_password($password),
 		'role'=>$role,
-		'status'=>'active',
+		'status'=>$status,
 		'following'=>array(),
 		'page'=>$page,
 		'created_at'=>gmdate('c')
@@ -1277,7 +1306,7 @@ function social_authenticate($username, $password)
 	if (!isset($data['users'][$username])) {
 		return false;
 	}
-	if (social_user_status($data['users'][$username]) == 'disabled') {
+	if (social_user_status($data['users'][$username]) != 'active') {
 		return false;
 	}
 	if (!social_verify_password($password, $data['users'][$username]['password_hash'])) {
@@ -1530,8 +1559,11 @@ function social_manage_user($username, $action, &$error)
 	}
 	if ($action == 'make_admin') {
 		$data['users'][$username]['role'] = 'admin';
+		$data['users'][$username]['status'] = 'active';
 	} elseif ($action == 'make_user') {
 		$data['users'][$username]['role'] = 'user';
+	} elseif ($action == 'approve') {
+		$data['users'][$username]['status'] = 'active';
 	} elseif ($action == 'disable') {
 		$data['users'][$username]['status'] = 'disabled';
 	} elseif ($action == 'enable') {
@@ -1613,7 +1645,15 @@ function social_controller_login($args)
 			header('Location: '.$dest);
 			die();
 		}
-		$error = 'Gebruikersnaam of wachtwoord klopt niet.';
+		$existing = social_user_by_username($username);
+		$password_ok = $existing && isset($existing['password_hash']) && social_verify_password($password, $existing['password_hash']);
+		if ($password_ok && social_user_status($existing) == 'pending') {
+			$error = 'Je account wacht nog op goedkeuring door een admin.';
+		} elseif ($password_ok && social_user_status($existing) == 'disabled') {
+			$error = 'Je account is geblokkeerd.';
+		} else {
+			$error = 'Gebruikersnaam of wachtwoord klopt niet.';
+		}
 	}
 	$body = tab(5).'<form method="post" action="'.htmlspecialchars(social_login_url($next), ENT_COMPAT, 'UTF-8').'">'.nl();
 	$body .= tab(6).'<label>Gebruikersnaam<br><input name="username" type="text" autocomplete="username"></label>'.nl();
@@ -1658,6 +1698,9 @@ function social_controller_admin($args)
 		} else {
 			$body .= social_admin_action_form($username, 'make_admin', 'maak admin');
 		}
+		if ($status == 'pending') {
+			$body .= social_admin_action_form($username, 'approve', 'keur goed');
+		}
 		if ($status == 'disabled') {
 			$body .= social_admin_action_form($username, 'enable', 'deblokkeer');
 		} else {
@@ -1686,17 +1729,26 @@ function social_admin_action_form($username, $action, $label)
 function social_controller_register($args)
 {
 	$error = '';
+	$notice = '';
 	if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 		$username = isset($_POST['username']) ? $_POST['username'] : '';
 		$password = isset($_POST['password']) ? $_POST['password'] : '';
 		$user = social_register_user($username, $password, $error);
 		if ($user) {
-			social_login($user['username']);
-			header('Location: '.social_profile_url($user['username']).'/edit');
-			die();
+			if (social_user_status($user) == 'pending') {
+				$notice = 'Je account is aangemaakt en wacht nu op goedkeuring door een admin.';
+			} else {
+				social_login($user['username']);
+				header('Location: '.social_profile_url($user['username']).'/edit');
+				die();
+			}
 		}
 	}
-	$body = tab(5).'<form method="post" action="'.htmlspecialchars(social_url('register'), ENT_COMPAT, 'UTF-8').'">'.nl();
+	$body = '';
+	if ($notice != '') {
+		$body .= tab(5).'<p class="social-notice">'.htmlspecialchars($notice, ENT_NOQUOTES, 'UTF-8').'</p>'.nl();
+	}
+	$body .= tab(5).'<form method="post" action="'.htmlspecialchars(social_url('register'), ENT_COMPAT, 'UTF-8').'">'.nl();
 	$body .= tab(6).'<label>Gebruikersnaam<br><input name="username" type="text" pattern="[a-z0-9_]{3,32}" autocomplete="username"></label>'.nl();
 	$body .= tab(6).'<label>Wachtwoord<br><input name="password" type="password" autocomplete="new-password"></label>'.nl();
 	$body .= tab(6).'<input type="submit" value="Account maken">'.nl();
@@ -1753,6 +1805,9 @@ function social_controller_profiles($args)
 	ksort($data['users']);
 	$body = '';
 	foreach ($data['users'] as $username=>$user) {
+		if (social_user_status($user) != 'active') {
+			continue;
+		}
 		$body .= tab(5).'<p class="social-profile-row"><a id="home" href="'.htmlspecialchars(social_profile_url($username), ENT_COMPAT, 'UTF-8').'">'.htmlspecialchars($username, ENT_NOQUOTES, 'UTF-8').'</a> '.social_follow_form($username, 'profiles', true).'</p>'.nl();
 	}
 	if ($body == '') {

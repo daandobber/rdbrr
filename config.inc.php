@@ -42,6 +42,7 @@ error_reporting(E_ALL & ~E_STRICT);						// see php documentation
 @define('SITE_NAME', 'rdbrr');
 @define('SOCIAL_ACCOUNTS', true);			// enable account/profile routes for the social fork
 @define('SOCIAL_ADMIN_USERS', '');			// optional space-separated usernames that should always be admins
+@define('SOCIAL_REQUIRE_ACCOUNT_APPROVAL', true);	// require admin approval for new non-admin accounts
 @define('SOCIAL_MAX_PROFILE_PAGES', 5);		// max profile pages per user, including the main page
 @define('SOCIAL_USER_UPLOAD_QUOTA', 5*1024*1024);	// max bytes of uploaded media per user profile
 @define('SOCIAL_ALLOWED_UPLOAD_MIMES', 'image/jpeg image/png image/gif image/webp');
