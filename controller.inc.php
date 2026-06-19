@@ -258,7 +258,9 @@ function controller_login($args)
 
 if (social_enabled() && AUTH_METHOD == 'social') {
 	register_controller('account', '', 'social_controller_account');
-	register_controller('admin', '', 'social_controller_admin');
+	if (social_admin_area_enabled()) {
+		register_controller('admin', '', 'social_controller_admin');
+	}
 	register_controller('login', '', 'social_controller_login');
 	register_controller('register', '', 'social_controller_register');
 	register_controller('logout', '', 'social_controller_logout');

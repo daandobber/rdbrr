@@ -14,6 +14,12 @@ function social_enabled()
 }
 
 
+function social_admin_area_enabled()
+{
+	return defined('SOCIAL_ADMIN_AREA_ENABLED') && SOCIAL_ADMIN_AREA_ENABLED;
+}
+
+
 function social_session_start()
 {
 	if (!social_enabled()) {
@@ -1620,6 +1626,26 @@ function social_site_update_lock_file()
 }
 
 
+function social_site_update_compose_command()
+{
+	$cmd = defined('SOCIAL_SITE_UPDATE_DOCKER_COMPOSE') ? trim(SOCIAL_SITE_UPDATE_DOCKER_COMPOSE) : 'docker compose';
+	if ($cmd == 'docker-compose') {
+		return 'docker-compose';
+	}
+	return 'docker compose';
+}
+
+
+function social_site_update_compose_project()
+{
+	$project = defined('SOCIAL_SITE_UPDATE_COMPOSE_PROJECT') ? trim(SOCIAL_SITE_UPDATE_COMPOSE_PROJECT) : 'rdbrr-public';
+	if (!preg_match('/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,62}$/', $project)) {
+		return 'rdbrr-public';
+	}
+	return $project;
+}
+
+
 function social_site_update_log_tail()
 {
 	$file = social_site_update_log_file();
@@ -1683,17 +1709,19 @@ function social_start_site_update(&$notice, &$error)
 		return false;
 	}
 	$lock_arg = escapeshellarg($lock);
+	$compose_cmd = social_site_update_compose_command();
+	$project_arg = escapeshellarg(social_site_update_compose_project());
 	$body = 'set -u; run_status=0; '.
 		'finish() { status=$?; echo "== rdbrr update klaar met status $status $(date -u +%Y-%m-%dT%H:%M:%SZ) =="; rm -f '.$lock_arg.'; exit $status; }; '.
 		'trap finish EXIT; '.
 		'echo "== rdbrr update start $(date -u +%Y-%m-%dT%H:%M:%SZ) =="; '.
 		'cd '.escapeshellarg($repo).' || exit 1; '.
-		'echo "$ docker compose -f '.escapeshellarg($compose).' down"; '.
-		'docker compose -f '.escapeshellarg($compose).' down || run_status=$?; '.
+		'echo "$ '.$compose_cmd.' -p '.$project_arg.' -f '.escapeshellarg($compose).' down"; '.
+		$compose_cmd.' -p '.$project_arg.' -f '.escapeshellarg($compose).' down || run_status=$?; '.
 		'echo "$ git pull --ff-only"; '.
 		'git pull --ff-only || run_status=$?; '.
-		'echo "$ docker compose -f '.escapeshellarg($compose).' up -d --build"; '.
-		'docker compose -f '.escapeshellarg($compose).' up -d --build || run_status=$?; '.
+		'echo "$ '.$compose_cmd.' -p '.$project_arg.' -f '.escapeshellarg($compose).' up -d --build"; '.
+		$compose_cmd.' -p '.$project_arg.' -f '.escapeshellarg($compose).' up -d --build || run_status=$?; '.
 		'exit $run_status';
 	$cmd = 'sh -c '.escapeshellarg($body).' > '.escapeshellarg($log).' 2>&1 & echo $!';
 	$output = array();
@@ -1820,6 +1848,9 @@ function social_controller_login($args)
 
 function social_controller_admin($args)
 {
+	if (!social_admin_area_enabled()) {
+		hotglue_error(404);
+	}
 	if (!social_current_user()) {
 		header('Location: '.social_login_url('admin'));
 		die();
@@ -1976,7 +2007,7 @@ function social_controller_profiles($args)
 	$current = social_current_username();
 	if ($current) {
 		$body .= tab(5).'<p><a href="'.htmlspecialchars(social_profile_url($current), ENT_COMPAT, 'UTF-8').'/edit">Mijn profiel bewerken</a> - <a href="'.htmlspecialchars(social_url('logout'), ENT_COMPAT, 'UTF-8').'">Uitloggen</a></p>'.nl();
-		if (social_is_admin()) {
+		if (social_admin_area_enabled() && social_is_admin()) {
 			$body .= tab(5).'<p><a id="home" href="'.htmlspecialchars(social_url('admin'), ENT_COMPAT, 'UTF-8').'">Beheer</a></p>'.nl();
 		}
 	} else {

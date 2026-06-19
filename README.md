@@ -34,7 +34,7 @@ Do not commit `content/` to a public repo. Move it to a server separately with `
 From the repository root:
 
 ```sh
-docker compose -f docker/docker-compose.yml up -d --build
+docker compose -p rdbrr-public -f docker/docker-compose.yml up -d --build
 ```
 
 Open:
@@ -43,7 +43,7 @@ Open:
 http://localhost:8080/
 ```
 
-Useful routes:
+Useful public routes:
 
 ```text
 http://localhost:8080/register
@@ -52,14 +52,38 @@ http://localhost:8080/timeline
 http://localhost:8080/feed
 http://localhost:8080/profiles
 http://localhost:8080/account
-http://localhost:8080/admin
 ```
 
 Stop:
 
 ```sh
-docker compose -f docker/docker-compose.yml down
+docker compose -p rdbrr-public -f docker/docker-compose.yml down
 ```
+
+## Local Admin Updater
+
+The public Docker stack does not expose `/admin`. Start the separate admin
+stack when you want account management and the site updater:
+
+```sh
+docker compose -p rdbrr-admin -f docker/docker-compose.admin.yml up -d --build
+```
+
+Open it only from the machine running Docker:
+
+```text
+http://127.0.0.1:8081/admin
+```
+
+For a remote server, use an SSH tunnel:
+
+```sh
+ssh -L 8081:127.0.0.1:8081 user@server
+```
+
+Then open `http://127.0.0.1:8081/admin` locally and log in with a social admin
+account. The admin stack bind-mounts the Docker socket so it can update the
+public `rdbrr-public` stack; keep this port bound to `127.0.0.1`.
 
 ## Server Deploy
 
@@ -82,7 +106,7 @@ Edit `user-config.inc.php` for your domain:
 Start Docker:
 
 ```sh
-docker compose -f docker/docker-compose.yml up -d --build
+docker compose -p rdbrr-public -f docker/docker-compose.yml up -d --build
 ```
 
 If you already have local data, copy `content/` to the server separately:
